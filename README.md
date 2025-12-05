@@ -9,12 +9,12 @@
 
 ```mermaid
 graph TD
-    User[Developer / User]
+    User["Developer / User"]
 
     subgraph "Postpipe Lab"
-        Static[Static Server (Express)]
-        Dynamic[Dynamic Lab (Next.js)]
-        Connectors[Database Connectors]
+        Static["Static Server (Express)"]
+        Dynamic["Dynamic Lab (Next.js)"]
+        Connectors["Database Connectors"]
     end
 
     subgraph "Databases"

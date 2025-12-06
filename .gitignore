@@ -31,3 +31,4 @@ ts-debug.log*
 
 # vercel
 .vercel
+.env

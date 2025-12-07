@@ -2,7 +2,7 @@
 
 ![Node.js](https://img.shields.io/badge/Node.js-18%2B-green)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)
-![License](https://img.shields.io/badge/License-MIT-yellow)
+![License](https://img.shields.io/badge/License-CC_BY--NC--SA_4.0-yellow)
 ![Status](https://img.shields.io/badge/Status-Active-success)
 
 ## Architecture

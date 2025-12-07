@@ -1,9 +1,9 @@
 {
     "name": "create-postpipe-auth",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "description": "CLI to scaffold PostPipe Authentication",
-    "author": "PostPipe Team",
-    "license": "MIT",
+    "author": "Sourodip Roy",
+    "license": "CC-BY-NC-SA-4.0",
     "repository": {
         "type": "git",
         "url": "https://github.com/postpipe/postpipe.git"

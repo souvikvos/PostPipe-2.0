@@ -30,6 +30,10 @@ Follow the interactive prompts to install MongoDB authentication.
 4.  Configures your `.env` file.
 5.  Provides ready-to-use Frontend Templates for Login/Signup.
 
+## Credits
+
+Created by **Sourodip Roy**.
+
 ## License
 
-MIT
+CC-BY-NC-SA-4.0

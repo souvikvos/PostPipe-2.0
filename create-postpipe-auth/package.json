@@ -1,0 +1,22 @@
+{
+    "name": "create-postpipe-auth",
+    "version": "1.0.1",
+    "description": "CLI to scaffold PostPipe Authentication",
+    "author": "PostPipe Team",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/postpipe/postpipe.git"
+    },
+    "type": "module",
+    "bin": {
+        "create-postpipe-auth": "./index.js"
+    },
+    "dependencies": {
+        "chalk": "^5.3.0",
+        "fs-extra": "^11.2.0",
+        "inquirer": "^9.2.14",
+        "ora": "^8.0.1",
+        "execa": "^8.0.1"
+    }
+}

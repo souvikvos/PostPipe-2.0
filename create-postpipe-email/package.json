@@ -1,0 +1,17 @@
+{
+    "name": "create-postpipe-email",
+    "version": "1.0.0",
+    "description": "CLI to scaffold PostPipe Email Utility (Resend)",
+    "author": "PostPipe Team",
+    "license": "MIT",
+    "type": "module",
+    "bin": {
+        "create-postpipe-email": "./index.js"
+    },
+    "dependencies": {
+        "chalk": "^5.3.0",
+        "fs-extra": "^11.2.0",
+        "ora": "^8.0.1",
+        "execa": "^8.0.1"
+    }
+}

@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/lib/models/*": ["./lib/models/*"],
+      "@/lib/dbConnect": ["./lib/dbConnect.ts"],
+      "@/*": ["./*"]
+    },
+    "moduleResolution": "node"
+  },
+  "include": ["api/**/*", "lib/**/*"]
+}

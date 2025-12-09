@@ -1,6 +1,6 @@
 {
     "name": "create-postpipe-email",
-    "version": "1.0.3",
+    "version": "1.0.4",
     "description": "CLI to scaffold PostPipe Email Utility (Resend)",
     "author": "Sourodip Roy",
     "license": "CC-BY-NC-SA-4.0",

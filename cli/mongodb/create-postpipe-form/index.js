@@ -24,16 +24,32 @@ async function main() {
                 { name: '2. (coming soon)', value: 'coming_soon_1', disabled: true },
             ],
         },
+        {
+            type: 'checkbox',
+            name: 'forms',
+            message: 'Which forms do you want to scaffold?',
+            choices: [
+                { name: 'Contact Form', value: 'contact', checked: true },
+                { name: 'Feedback Form', value: 'feedback' },
+                { name: 'Newsletter Subscription', value: 'newsletter' },
+            ],
+            validate: (answer) => {
+                if (answer.length < 1) {
+                    return 'You must choose at least one form.';
+                }
+                return true;
+            },
+        }
     ]);
 
     if (answers.database === 'mongodb') {
-        await setupMongoDB();
+        await setupMongoDB(answers.forms);
     } else {
         console.log('Selection not supported yet.');
     }
 }
 
-async function setupMongoDB() {
+async function setupMongoDB(forms) {
     const spinner = ora('Initializing Form Submission APIs...').start();
 
     try {
@@ -50,15 +66,49 @@ async function setupMongoDB() {
 
         spinner.text = `Copying templates to project...`;
 
-        // Copy Models
+        // Destinations
         const modelsDest = path.join(baseDir, 'lib', 'models');
-        await fs.copy(path.join(libSource, 'models'), modelsDest);
-
-        // Copy API Routes
         const apiDest = path.join(baseDir, 'app', 'api');
-        await fs.copy(apiSource, apiDest);
 
-        // Copy dbConnect
+        // Ensure directories exist
+        await fs.ensureDir(modelsDest);
+        await fs.ensureDir(apiDest);
+
+        // Map form selection to file names
+        const formConfig = {
+            contact: {
+                model: 'Contact.ts',
+                apiDir: 'contact'
+            },
+            feedback: {
+                model: 'Feedback.ts',
+                apiDir: 'feedback'
+            },
+            newsletter: {
+                model: 'Newsletter.ts',
+                apiDir: 'newsletter'
+            }
+        };
+
+        // Copy selected forms
+        for (const form of forms) {
+            const config = formConfig[form];
+            if (config) {
+                // Copy Model
+                await fs.copy(
+                    path.join(libSource, 'models', config.model),
+                    path.join(modelsDest, config.model)
+                );
+
+                // Copy API Route
+                await fs.copy(
+                    path.join(apiSource, config.apiDir),
+                    path.join(apiDest, config.apiDir)
+                );
+            }
+        }
+
+        // Copy dbConnect (needed for all)
         const dbConnectSource = path.join(libSource, 'dbConnect.ts');
         const dbConnectDest = path.join(baseDir, 'lib', 'dbConnect.ts');
         if (await fs.pathExists(dbConnectSource)) {

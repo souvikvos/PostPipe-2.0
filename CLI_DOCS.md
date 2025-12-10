@@ -36,6 +36,7 @@ If you prefer to build piece-by-piece, use our specific modules:
 | **User Model** 👤         | `npx create-postpipe-user`        | Installs Mongoose User Model & DB Connector.      |
 | **Email Util** 📧         | `npx create-postpipe-email`       | Installs Resend Email Utility.                    |
 | **Signup Flow** 🔐        | `npx create-postpipe-signup`      | Installs Backend + Signup Page implementation.    |
+| **User Profile** 👤       | `npx create-postpipe-profile`     | Installs Profile & Password Management pages.     |
 
 ---
 
@@ -96,6 +97,20 @@ Scaffolds a complete "Sign Up" flow.
 
 - Installs the Backend infrastructure (User, DB, Email) required for signup.
 - Creates a `SignupPage.tsx` component pre-wired to server actions.
+
+### 7. `create-postpipe-profile`
+
+Scaffolds a complete User Profile management system.
+
+**What it does:**
+
+- **Backend**: Installs `actions.ts` for updating profiles and changing passwords, and Zod schemas.
+- **Frontend**: Creates a premium `ProfilePage.tsx` component.
+
+**Features:**
+- Update Name & Email.
+- Secure Password Change (verifies old password).
+- Fetch User details.
 
 ---
 

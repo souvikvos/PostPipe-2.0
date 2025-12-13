@@ -1,9 +1,0 @@
-{
-<<<<<<< HEAD
-  "/page": "app/page.js",
-  "/api/test/route": "app/api/test/route.js"
-=======
-  "/auth-demo/page": "app/auth-demo/page.js",
-  "/profile-demo/page": "app/profile-demo/page.js"
->>>>>>> c367ca09b7039e94f27ff1410fa703e777f3342f
-}

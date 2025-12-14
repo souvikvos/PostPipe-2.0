@@ -153,8 +153,8 @@ export default function CMSDemo() {
                         key={tab.id}
                         onClick={() => setActiveTab(tab)}
                         className={`px-4 py-2 font-medium rounded-t-lg transition-colors ${activeTab.id === tab.id
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-white text-gray-600 hover:bg-gray-100'
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-white text-gray-600 hover:bg-gray-100'
                             }`}
                     >
                         {tab.label}
@@ -179,7 +179,10 @@ export default function CMSDemo() {
                             )}
 
                             {activeTab.id === 'products' && (
-                                <Input name="price" type="number" label="Price" placeholder="0.00" required />
+                                <>
+                                    <Input name="price" type="number" label="Price" placeholder="0.00" required />
+                                    <Input name="stock" type="number" label="Stock" placeholder="0" />
+                                </>
                             )}
 
                             {(activeTab.id === 'posts') && (
@@ -257,6 +260,7 @@ export default function CMSDemo() {
                                         {item.name || item.title || (item.content ? item.content.substring(0, 20) + '...' : 'Item')}
                                     </h3>
                                     {item.price && <span className="text-green-600 font-mono bg-green-50 px-2 py-0.5 rounded text-xs">${item.price}</span>}
+                                    {item.stock !== undefined && <span className="text-blue-600 font-mono bg-blue-50 px-2 py-0.5 rounded text-xs">Stock: {item.stock}</span>}
                                     {item.rating && <span className="text-yellow-500 text-sm">{'⭐'.repeat(item.rating)}</span>}
                                 </div>
 

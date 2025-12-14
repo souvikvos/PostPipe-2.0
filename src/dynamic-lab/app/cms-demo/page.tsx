@@ -55,9 +55,12 @@ export default function CMSDemo() {
     const [loading, setLoading] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
 
+    const [formData, setFormData] = useState<any>({});
+
     useEffect(() => {
         fetchData();
         setEditingId(null);
+        setFormData({});
     }, [activeTab]);
 
     const fetchData = async () => {
@@ -73,25 +76,26 @@ export default function CMSDemo() {
         }
     };
 
+    const handleInputChange = (e: any) => {
+        const { name, value } = e.target;
+        setFormData((prev: any) => ({ ...prev, [name]: value }));
+    };
+
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        const formData = new FormData(e.currentTarget);
-        const data: any = {};
-        formData.forEach((value, key) => data[key] = value);
+        const data: any = { ...formData }; // Use state data
 
         // Auto-generate slugs/booleans for demo
         if (activeTab.id === 'products' || activeTab.id === 'categories') {
             data.slug = data.name.toLowerCase().replace(/ /g, '-');
-            if (activeTab.id === 'products') data.images = ['https://via.placeholder.com/150'];
+            if (activeTab.id === 'products' && !data.images) data.images = ['https://via.placeholder.com/150'];
         }
         if (activeTab.id === 'posts') {
             data.slug = data.title.toLowerCase().replace(/ /g, '-');
             data.published = true;
         }
-        if (activeTab.id === 'reviews') data.rating = Number(data.rating);
+        if (activeTab.id === 'reviews') data.rating = Number(data.rating || 5);
         if (activeTab.id === 'comments' && !data.post) {
-            // Link to a dummy ID if user doesn't provide one (for demo purposes)
-            // In real app, you'd select from dropdown
             data.post = "6578a9b1cde2f3a4b5c6d7e8";
         }
 
@@ -107,7 +111,7 @@ export default function CMSDemo() {
             const result = await res.json();
 
             if (result.success) {
-                (e.target as HTMLFormElement).reset();
+                setFormData({});
                 setEditingId(null);
                 fetchData();
                 alert(editingId ? 'Updated successfully!' : 'Created successfully!');
@@ -136,10 +140,14 @@ export default function CMSDemo() {
 
     const handleEdit = (item: any) => {
         setEditingId(item._id);
-        // In a real app we would populate form fields. 
-        // Here we just scroll to form and let user re-type for simplicity (or we can populate via DOM manually if simple)
-        // For this demo, simply setting the ID switches the form to "Update Mode"
-        alert(`Editing ${item.name || item.title || 'Item'}. Please fill the form with new values.`);
+        const newData = { ...item };
+        // Ensure defaults for editing
+        if (!newData.rating) newData.rating = 5;
+        // Strip _id and __v for cleaner form state (optional, but good practice)
+        delete newData._id;
+        delete newData.__v;
+        setFormData(newData);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     return (
@@ -175,35 +183,88 @@ export default function CMSDemo() {
                             {/* Dynamic Fields based on Active Tab */}
 
                             {(activeTab.id === 'products' || activeTab.id === 'categories') && (
-                                <Input name="name" label="Name" placeholder="Item Name" required />
+                                <Input
+                                    name="name"
+                                    label="Name"
+                                    placeholder="Item Name"
+                                    required
+                                    value={formData.name || ''}
+                                    onChange={handleInputChange}
+                                />
                             )}
 
                             {activeTab.id === 'products' && (
                                 <>
-                                    <Input name="price" type="number" label="Price" placeholder="0.00" required />
-                                    <Input name="stock" type="number" label="Stock" placeholder="0" />
+                                    <Input
+                                        name="price"
+                                        type="number"
+                                        label="Price"
+                                        placeholder="0.00"
+                                        required
+                                        value={formData.price || ''}
+                                        onChange={handleInputChange}
+                                    />
+                                    <Input
+                                        name="stock"
+                                        type="number"
+                                        label="Stock"
+                                        placeholder="0"
+                                        value={formData.stock || ''}
+                                        onChange={handleInputChange}
+                                    />
                                 </>
                             )}
 
                             {(activeTab.id === 'posts') && (
                                 <>
-                                    <Input name="title" label="Title" placeholder="Post Title" required />
-                                    <Input name="author" label="Author" placeholder="Author Name" />
+                                    <Input
+                                        name="title"
+                                        label="Title"
+                                        placeholder="Post Title"
+                                        required
+                                        value={formData.title || ''}
+                                        onChange={handleInputChange}
+                                    />
+                                    <Input
+                                        name="author"
+                                        label="Author"
+                                        placeholder="Author Name"
+                                        value={formData.author || ''}
+                                        onChange={handleInputChange}
+                                    />
                                 </>
                             )}
 
                             {(activeTab.id === 'comments' || activeTab.id === 'reviews') && (
-                                <Input name="author" label="Author" placeholder="Your Name" required />
+                                <Input
+                                    name="author"
+                                    label="Author"
+                                    placeholder="Your Name"
+                                    required
+                                    value={formData.author || ''}
+                                    onChange={handleInputChange}
+                                />
                             )}
 
                             {activeTab.id === 'comments' && (
-                                <Input name="post" label="Post ID (Optional)" placeholder="Leave empty for demo default" />
+                                <Input
+                                    name="post"
+                                    label="Post ID (Optional)"
+                                    placeholder="Leave empty for demo default"
+                                    value={formData.post || ''}
+                                    onChange={handleInputChange}
+                                />
                             )}
 
                             {activeTab.id === 'reviews' && (
                                 <div className="mb-4">
                                     <label className="block text-sm font-medium mb-1">Rating</label>
-                                    <select name="rating" className="w-full p-2 border rounded-md">
+                                    <select
+                                        name="rating"
+                                        className="w-full p-2 border rounded-md"
+                                        value={formData.rating || 5}
+                                        onChange={handleInputChange}
+                                    >
                                         <option value="5">5 Stars</option>
                                         <option value="4">4 Stars</option>
                                         <option value="3">3 Stars</option>
@@ -216,6 +277,8 @@ export default function CMSDemo() {
                                 label={activeTab.id === 'products' ? 'Description' : 'Content'}
                                 placeholder="Content..."
                                 required
+                                value={activeTab.id === 'products' ? (formData.description || '') : (formData.content || '')}
+                                onChange={handleInputChange}
                             />
 
                             <div className="flex gap-2 mt-4">
@@ -225,7 +288,10 @@ export default function CMSDemo() {
                                 {editingId && (
                                     <button
                                         type="button"
-                                        onClick={() => setEditingId(null)}
+                                        onClick={() => {
+                                            setEditingId(null);
+                                            setFormData({});
+                                        }}
                                         className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
                                     >
                                         Cancel

@@ -1,0 +1,23 @@
+{
+  "name": "create-postpipe-search",
+  "version": "1.0.0",
+  "description": "CLI to scaffold Search, Filter, and Pagination utilities for PostPipe",
+  "author": "Sourodip Roy",
+  "license": "CC-BY-NC-SA-4.0",
+  "type": "module",
+  "bin": {
+    "create-postpipe-search": "./index.js"
+  },
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "fs-extra": "^11.2.0",
+    "inquirer": "^9.2.14",
+    "ora": "^8.0.1",
+    "execa": "^8.0.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Sourodip-1/PostPipe-2.0",
+    "directory": "cli/mongodb/create-postpipe-search"
+  }
+}

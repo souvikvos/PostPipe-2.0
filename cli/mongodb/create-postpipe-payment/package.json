@@ -1,0 +1,31 @@
+{
+  "name": "create-postpipe-payment",
+  "version": "1.0.0",
+  "description": "Scaffold a Razorpay Payment System for Next.js",
+  "main": "index.js",
+  "bin": {
+    "create-postpipe-payment": "./index.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "nextjs",
+    "razorpay",
+    "payments",
+    "scaffold"
+  ],
+  "author": "Sourodip",
+  "license": "ISC",
+  "dependencies": {
+    "@types/shortid": "^2.2.0",
+    "chalk": "^4.1.2",
+    "commander": "^11.1.0",
+    "fs-extra": "^11.2.0",
+    "inquirer": "^8.2.6",
+    "mongoose": "^9.0.1",
+    "ora": "^5.4.1",
+    "razorpay": "^2.9.6",
+    "shortid": "^2.2.17"
+  }
+}

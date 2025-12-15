@@ -1,0 +1,28 @@
+{
+  "name": "create-postpipe-delivery",
+  "version": "1.0.0",
+  "description": "Scaffold a Delivery Tracking System for Next.js",
+  "main": "index.js",
+  "bin": {
+    "create-postpipe-delivery": "./index.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "nextjs",
+    "delivery",
+    "tracking",
+    "shiprocket",
+    "scaffold"
+  ],
+  "author": "Sourodip",
+  "license": "ISC",
+  "dependencies": {
+    "commander": "^11.1.0",
+    "chalk": "^4.1.2",
+    "fs-extra": "^11.2.0",
+    "inquirer": "^8.2.6",
+    "ora": "^5.4.1"
+  }
+}

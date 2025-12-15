@@ -1,0 +1,28 @@
+{
+  "name": "create-postpipe-analytics",
+  "version": "1.0.0",
+  "description": "Scaffold a Simple Analytics System for Next.js",
+  "main": "index.js",
+  "bin": {
+    "create-postpipe-analytics": "./index.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "nextjs",
+    "analytics",
+    "tracking",
+    "mongodb",
+    "scaffold"
+  ],
+  "author": "Sourodip",
+  "license": "ISC",
+  "dependencies": {
+    "commander": "^11.1.0",
+    "chalk": "^4.1.2",
+    "fs-extra": "^11.2.0",
+    "inquirer": "^8.2.6",
+    "ora": "^5.4.1"
+  }
+}

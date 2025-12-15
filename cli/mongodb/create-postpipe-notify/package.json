@@ -1,0 +1,28 @@
+{
+  "name": "create-postpipe-notify",
+  "version": "1.0.0",
+  "description": "Scaffold a Notification System (Email + DB) for Next.js",
+  "main": "index.js",
+  "bin": {
+    "create-postpipe-notify": "./index.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "nextjs",
+    "notifications",
+    "email",
+    "database",
+    "scaffold"
+  ],
+  "author": "Sourodip",
+  "license": "ISC",
+  "dependencies": {
+    "commander": "^11.1.0",
+    "chalk": "^4.1.2",
+    "fs-extra": "^11.2.0",
+    "inquirer": "^8.2.6",
+    "ora": "^5.4.1"
+  }
+}

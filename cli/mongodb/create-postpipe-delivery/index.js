@@ -25,12 +25,24 @@ async function main() {
     const answers = await inquirer.prompt([
         {
             type: 'list',
+            name: 'database',
+            message: 'Choose your database:',
+            choices: ['MongoDB (Mongoose)', 'PostgreSQL (Prisma) - Coming Soon'],
+            default: 'MongoDB (Mongoose)'
+        },
+        {
+            type: 'list',
             name: 'provider',
             message: 'Choose your logistics provider:',
             choices: ['ShipRocket', 'Generic / Internal Tracking'],
             default: 'Generic / Internal Tracking'
         }
     ]);
+
+    if (answers.database !== 'MongoDB (Mongoose)') {
+        console.log(chalk.red('Only MongoDB is currently supported. Exiting...'));
+        return;
+    }
 
     const spinner = ora('Scaffolding Delivery System...').start();
 

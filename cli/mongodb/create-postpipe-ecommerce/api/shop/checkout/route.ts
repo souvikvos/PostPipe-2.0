@@ -15,20 +15,35 @@ const instance = new Razorpay({
 export async function POST(request: Request) {
   await dbConnect();
   try {
-    const { userId, address, couponCode } = await request.json();
+    const { userId, address, couponCode, items } = await request.json();
 
-    // 1. Get Cart
-    const cart = await Cart.findOne({ user: userId }).populate('items.product');
-    if (!cart || cart.items.length === 0) {
-        return NextResponse.json({ error: 'Cart is empty' }, { status: 400 });
+    // 1. Resolve Items (Client items take precedence for resilience, or fallback to DB Cart)
+    let itemsToProcess = [];
+    
+    if (items && items.length > 0) {
+        itemsToProcess = items;
+    } else {
+        // Fallback to Server Cart
+        const cart = await Cart.findOne({ user: userId }).populate('items.product');
+        if (!cart || cart.items.length === 0) {
+            return NextResponse.json({ error: 'Cart is empty' }, { status: 400 });
+        }
+        itemsToProcess = cart.items.map((item: any) => ({
+            product: item.product,
+            quantity: item.quantity
+        }));
     }
 
     let subtotal = 0;
-    const itemsToOrder = [];
+    const finalOrderItems = [];
     
-    // 2. Validate Stock & Calculate Totals (Snapshot Price)
-    for (const item of cart.items) {
-        const product = item.product as any;
+    // 2. Validate Stock & Calculate Totals (Snapshot Price from DB Only)
+    for (const item of itemsToProcess) {
+        // Fetch fresh product data to prevent price tampering
+        const productId = item.product._id || item.product; // Handle populated vs raw ID
+        const product = await Product.findById(productId);
+        
+        if (!product) return NextResponse.json({ error: `Product not found: ${productId}` }, { status: 404 });
         if (product.stock < item.quantity) {
              return NextResponse.json({ error: `Insufficient stock for ${product.name}` }, { status: 400 });
         }
@@ -36,7 +51,7 @@ export async function POST(request: Request) {
         const price = product.salePrice || product.price;
         subtotal += price * item.quantity;
         
-        itemsToOrder.push({
+        finalOrderItems.push({
             product: product._id,
             name: product.name,
             price: price, // Snapshot!
@@ -61,8 +76,6 @@ export async function POST(request: Request) {
             } else {
                 discount = coupon.value;
             }
-            
-            // Limit check? (Optional enhancement)
         }
     }
 
@@ -78,7 +91,7 @@ export async function POST(request: Request) {
     // 5. Create DB Order (Pending)
     const newOrder = await Order.create({
         user: userId,
-        items: itemsToOrder,
+        items: finalOrderItems,
         subtotal,
         discount,
         total,
@@ -92,17 +105,14 @@ export async function POST(request: Request) {
         status: 'pending'
     });
 
-    // 6. Decrement Stock **NOW** (Locking inventory)
-    // Alternatively, decrement after payment success. 
-    // Best practice often validates usually holds stock for x minutes, 
-    // but for simplicity, we decrement now. If payment fails, we can release via Verify webhook.
-    for (const item of itemsToOrder) {
+    // 6. Decrement Stock NOW (Lock inventory)
+    for (const item of finalOrderItems) {
         await Product.findByIdAndUpdate(item.product, { $inc: { stock: -item.quantity } });
     }
-    
-    // Clear Cart ?? Usually clear after payment success. 
-    // But for Razorpay flow, we might want to keep it until verified.
-    // Let's keep cart for now, clear in /verify.
+
+    // Note: We don't clear DB cart here automatically if using client-side items. 
+    // Logic: If successfully ordered, client should clear their state. 
+    // Server cart clearing happens on /verify success.
 
     return NextResponse.json({ success: true, order: newOrder, razorpayOrder: rzpOrder });
 

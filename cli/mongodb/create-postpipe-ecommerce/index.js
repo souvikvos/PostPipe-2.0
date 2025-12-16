@@ -19,8 +19,8 @@ program.parse(process.argv);
 const CURR_DIR = process.cwd();
 
 async function main() {
-    console.log(chalk.bold.hex('#FF5733')('\n🚀  PostPipe Master Ecommerce CLI  🚀\n'));
-    console.log(chalk.dim('One command to rule them all. Scaffolding your entire backend...\n'));
+    console.log(chalk.bold.hex('#FF5733')('\n🚀  PostPipe Master Ecommerce CLI v1.0.5  🚀\n'));
+    console.log(chalk.dim('Now with Secure Auth (JWT/Bcrypt), Client-side Checkout, and Order History!\n'));
 
     // PROMPT: Consolidated Configuration
     const answers = await inquirer.prompt([

@@ -1,6 +1,6 @@
 {
   "name": "create-postpipe-ecommerce",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Scaffold a Complete Production-Ready Ecommerce Backend for Next.js",
   "main": "index.js",
   "bin": {

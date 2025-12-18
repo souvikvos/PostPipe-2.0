@@ -43,11 +43,10 @@ async function setupMongoDB() {
         // 1. Copy Template Files
         // Helper to check if src exists
         const isSrc = fs.existsSync(path.join(targetDir, 'src'));
-        // Copy directly to standard Next.js folders (lib, models, app)
-        const destDir = isSrc ? path.join(targetDir, 'src') : targetDir;
+        const authDest = isSrc ? path.join(targetDir, 'src', 'lib', 'auth') : path.join(targetDir, 'lib', 'auth');
 
-        spinner.text = `Copying templates to ${destDir}...`;
-        await fs.copy(templateDir, destDir);
+        spinner.text = `Copying templates to ${authDest}...`;
+        await fs.copy(templateDir, authDest);
 
         // 2. Install Dependencies
         spinner.text = 'Installing dependencies...';
@@ -74,9 +73,10 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
         spinner.succeed(chalk.green('MongoDB Authentication successfully initialized!'));
 
         console.log('\nNext Steps:');
-        console.log(`1. Review the generated files in ${chalk.cyan(isSrc ? 'src/lib' : 'lib')}, ${chalk.cyan(isSrc ? 'src/models' : 'models')}, and ${chalk.cyan(isSrc ? 'src/app' : 'app')}.`);
+        console.log(`1. Check the files in ${chalk.cyan(authDest)}`);
         console.log(`2. Update your ${chalk.cyan('.env')} file with real values.`);
-        console.log(`3. Run: ${chalk.yellow('npm run dev')}`);
+        console.log(`3. Move the frontend pages from ${chalk.cyan(authDest + '/frontend')} to your app directory.`);
+        console.log(`4. Run: ${chalk.yellow('npm run dev')}`);
 
     } catch (error) {
         spinner.fail('Setup failed.');

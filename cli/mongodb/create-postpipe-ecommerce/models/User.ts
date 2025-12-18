@@ -8,6 +8,11 @@ export interface IUser extends Document {
   role: 'user' | 'admin';
   provider?: string;
   
+  // Verification
+  isVerified: boolean;
+  verificationToken?: string;
+  verificationTokenExpiry?: Date;
+  
   // E-commerce specific
   address?: {
     street: string;
@@ -28,6 +33,11 @@ const UserSchema: Schema = new Schema(
     image: { type: String },
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
     provider: { type: String, default: 'credentials' },
+
+    // Verification
+    isVerified: { type: Boolean, default: false },
+    verificationToken: { type: String },
+    verificationTokenExpiry: { type: Date },
     
     // Unified refs
     address: [{

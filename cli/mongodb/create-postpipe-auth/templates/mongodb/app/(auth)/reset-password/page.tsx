@@ -1,7 +1,7 @@
 'use client';
 
 import { useFormState } from 'react-dom';
-import { resetPassword } from '../../../lib/actions/auth';
+import { resetPassword } from '../actions';
 import { useSearchParams } from 'next/navigation';
 
 const initialState = {
@@ -47,7 +47,7 @@ export default function ResetPasswordPage() {
                 </p>
             )}
             {state?.success && (
-                <a href="/login" style={{ display: 'block', marginTop: '10px' }}>Go to Login</a>
+                <a href="/auth/login" style={{ display: 'block', marginTop: '10px' }}>Go to Login</a>
             )}
         </div>
     );

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useFormState } from 'react-dom';
-import { login } from '../../../lib/actions/auth'; // Update path after moving
+import { login } from '../actions'; // Update path after moving
 
 const initialState = {
     message: '',
@@ -43,11 +43,11 @@ export default function LoginPage() {
                 </p>
             )}
             <div style={{ marginTop: '15px', textAlign: 'center', fontSize: '0.9em' }}>
-                <Link href="/signup" style={{ color: '#0070f3', textDecoration: 'none' }}>
+                <Link href="/auth/signup" style={{ color: '#0070f3', textDecoration: 'none' }}>
                     Don't have an account? Sign up
                 </Link>
                 <br />
-                <Link href="/forgot-password" style={{ color: '#666', textDecoration: 'none', marginTop: '5px', display: 'inline-block' }}>
+                <Link href="/auth/forgot-password" style={{ color: '#666', textDecoration: 'none', marginTop: '5px', display: 'inline-block' }}>
                     Forgot Password?
                 </Link>
             </div>

@@ -3,10 +3,10 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
-import dbConnect from '../db';
-import User from '../../models/User';
-import { SignupSchema, LoginSchema, ForgotPasswordSchema, ResetPasswordSchema } from '../schemas';
-import { sendVerificationEmail, sendPasswordResetEmail } from '../email';
+import dbConnect from './mongodb';
+import User from './User';
+import { SignupSchema, LoginSchema, ForgotPasswordSchema, ResetPasswordSchema } from './schemas';
+import { sendVerificationEmail, sendPasswordResetEmail } from './email';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 

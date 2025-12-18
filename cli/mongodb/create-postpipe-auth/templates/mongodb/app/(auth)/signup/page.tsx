@@ -2,9 +2,9 @@
 
 import Link from 'next/link';
 import { useFormState } from 'react-dom';
-import { signup } from '../../../lib/actions/auth'; // Update path after moving
+import { signup } from '../actions'; // Update path after moving
 
-const initialState: { message: string; success: boolean; errors?: Record<string, string[]> } = {
+const initialState = {
     message: '',
     success: false,
 };
@@ -62,7 +62,7 @@ export default function SignupPage() {
                 </div>
             )}
             <p style={{ marginTop: '15px', textAlign: 'center' }}>
-                Already have an account? <Link href="/login" style={{ color: '#0070f3' }}>Login</Link>
+                Already have an account? <Link href="/auth/login" style={{ color: '#0070f3' }}>Login</Link>
             </p>
         </div>
     );

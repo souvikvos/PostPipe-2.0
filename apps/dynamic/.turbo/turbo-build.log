@@ -1,0 +1,106 @@
+
+> dynamic@0.1.0 build
+> next build
+
+  ▲ Next.js 14.2.0
+
+   Creating an optimized production build ...
+Failed to compile.
+
+./app/globals.css.webpack[javascript/auto]!=!../../node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[13].oneOf[12].use[2]!../../node_modules/next/dist/build/webpack/loaders/postcss-loader/src/index.js??ruleSet[1].rules[13].oneOf[12].use[3]!./app/globals.css
+Error: Cannot find module 'autoprefixer'
+Require stack:
+- D:\Codes\PostPipe-2.0\node_modules\next\dist\build\webpack\config\blocks\css\plugins.js
+- D:\Codes\PostPipe-2.0\node_modules\next\dist\build\webpack\config\blocks\css\index.js
+- D:\Codes\PostPipe-2.0\node_modules\next\dist\build\webpack\config\index.js
+- D:\Codes\PostPipe-2.0\node_modules\next\dist\build\webpack-config.js
+- D:\Codes\PostPipe-2.0\node_modules\next\dist\build\webpack-build\impl.js
+- D:\Codes\PostPipe-2.0\node_modules\next\dist\compiled\jest-worker\processChild.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1225:15)
+    at D:\Codes\PostPipe-2.0\node_modules\next\dist\server\require-hook.js:55:36
+    at Function.resolve (node:internal/modules/helpers:146:19)
+    at loadPlugin (D:\Codes\PostPipe-2.0\node_modules\next\dist\build\webpack\config\blocks\css\plugins.js:49:32)
+    at D:\Codes\PostPipe-2.0\node_modules\next\dist\build\webpack\config\blocks\css\plugins.js:157:56
+    at Array.map (<anonymous>)
+    at getPostCssPlugins (D:\Codes\PostPipe-2.0\node_modules\next\dist\build\webpack\config\blocks\css\plugins.js:157:47)
+    at async D:\Codes\PostPipe-2.0\node_modules\next\dist\build\webpack\config\blocks\css\index.js:124:36
+    at async D:\Codes\PostPipe-2.0\node_modules\next\dist\build\webpack\loaders\postcss-loader\src\index.js:51:40
+    at async Span.traceAsyncFn (D:\Codes\PostPipe-2.0\node_modules\next\dist\trace\trace.js:154:20)
+
+Import trace for requested module:
+./app/globals.css.webpack[javascript/auto]!=!../../node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[13].oneOf[12].use[2]!../../node_modules/next/dist/build/webpack/loaders/postcss-loader/src/index.js??ruleSet[1].rules[13].oneOf[12].use[3]!./app/globals.css
+./app/globals.css
+
+./app/globals.css
+Error: Cannot find module 'autoprefixer'
+Require stack:
+- D:\Codes\PostPipe-2.0\node_modules\next\dist\build\webpack\config\blocks\css\plugins.js
+- D:\Codes\PostPipe-2.0\node_modules\next\dist\build\webpack\config\blocks\css\index.js
+- D:\Codes\PostPipe-2.0\node_modules\next\dist\build\webpack\config\index.js
+- D:\Codes\PostPipe-2.0\node_modules\next\dist\build\webpack-config.js
+- D:\Codes\PostPipe-2.0\node_modules\next\dist\build\webpack-build\impl.js
+- D:\Codes\PostPipe-2.0\node_modules\next\dist\compiled\jest-worker\processChild.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1225:15)
+    at D:\Codes\PostPipe-2.0\node_modules\next\dist\server\require-hook.js:55:36
+    at Function.resolve (node:internal/modules/helpers:146:19)
+    at loadPlugin (D:\Codes\PostPipe-2.0\node_modules\next\dist\build\webpack\config\blocks\css\plugins.js:49:32)
+    at D:\Codes\PostPipe-2.0\node_modules\next\dist\build\webpack\config\blocks\css\plugins.js:157:56
+    at Array.map (<anonymous>)
+    at getPostCssPlugins (D:\Codes\PostPipe-2.0\node_modules\next\dist\build\webpack\config\blocks\css\plugins.js:157:47)
+    at async D:\Codes\PostPipe-2.0\node_modules\next\dist\build\webpack\config\blocks\css\index.js:124:36
+    at async D:\Codes\PostPipe-2.0\node_modules\next\dist\build\webpack\loaders\postcss-loader\src\index.js:51:40
+    at async Span.traceAsyncFn (D:\Codes\PostPipe-2.0\node_modules\next\dist\trace\trace.js:154:20)
+    at tryRunOrWebpackError (D:\Codes\PostPipe-2.0\node_modules\next\dist\compiled\webpack\bundle5.js:28:312989)
+    at __webpack_require_module__ (D:\Codes\PostPipe-2.0\node_modules\next\dist\compiled\webpack\bundle5.js:28:131165)
+    at __nested_webpack_require_153728__ (D:\Codes\PostPipe-2.0\node_modules\next\dist\compiled\webpack\bundle5.js:28:130607)
+    at D:\Codes\PostPipe-2.0\node_modules\next\dist\compiled\webpack\bundle5.js:28:131454
+    at symbolIterator (D:\Codes\PostPipe-2.0\node_modules\next\dist\compiled\neo-async\async.js:1:14444)
+    at done (D:\Codes\PostPipe-2.0\node_modules\next\dist\compiled\neo-async\async.js:1:14824)
+    at Hook.eval [as callAsync] (eval at create (D:\Codes\PostPipe-2.0\node_modules\next\dist\compiled\webpack\bundle5.js:13:28858), <anonymous>:15:1)
+    at Hook.CALL_ASYNC_DELEGATE [as _callAsync] (D:\Codes\PostPipe-2.0\node_modules\next\dist\compiled\webpack\bundle5.js:13:26012)
+    at D:\Codes\PostPipe-2.0\node_modules\next\dist\compiled\webpack\bundle5.js:28:130328
+    at symbolIterator (D:\Codes\PostPipe-2.0\node_modules\next\dist\compiled\neo-async\async.js:1:14402)
+-- inner error --
+Error: Cannot find module 'autoprefixer'
+Require stack:
+- D:\Codes\PostPipe-2.0\node_modules\next\dist\build\webpack\config\blocks\css\plugins.js
+- D:\Codes\PostPipe-2.0\node_modules\next\dist\build\webpack\config\blocks\css\index.js
+- D:\Codes\PostPipe-2.0\node_modules\next\dist\build\webpack\config\index.js
+- D:\Codes\PostPipe-2.0\node_modules\next\dist\build\webpack-config.js
+- D:\Codes\PostPipe-2.0\node_modules\next\dist\build\webpack-build\impl.js
+- D:\Codes\PostPipe-2.0\node_modules\next\dist\compiled\jest-worker\processChild.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1225:15)
+    at D:\Codes\PostPipe-2.0\node_modules\next\dist\server\require-hook.js:55:36
+    at Function.resolve (node:internal/modules/helpers:146:19)
+    at loadPlugin (D:\Codes\PostPipe-2.0\node_modules\next\dist\build\webpack\config\blocks\css\plugins.js:49:32)
+    at D:\Codes\PostPipe-2.0\node_modules\next\dist\build\webpack\config\blocks\css\plugins.js:157:56
+    at Array.map (<anonymous>)
+    at getPostCssPlugins (D:\Codes\PostPipe-2.0\node_modules\next\dist\build\webpack\config\blocks\css\plugins.js:157:47)
+    at async D:\Codes\PostPipe-2.0\node_modules\next\dist\build\webpack\config\blocks\css\index.js:124:36
+    at async D:\Codes\PostPipe-2.0\node_modules\next\dist\build\webpack\loaders\postcss-loader\src\index.js:51:40
+    at async Span.traceAsyncFn (D:\Codes\PostPipe-2.0\node_modules\next\dist\trace\trace.js:154:20)
+    at Object.<anonymous> (D:\Codes\PostPipe-2.0\node_modules\next\dist\build\webpack\loaders\css-loader\src\index.js??ruleSet[1].rules[13].oneOf[12].use[2]!D:\Codes\PostPipe-2.0\node_modules\next\dist\build\webpack\loaders\postcss-loader\src\index.js??ruleSet[1].rules[13].oneOf[12].use[3]!D:\Codes\PostPipe-2.0\apps\dynamic\app\globals.css:1:7)
+    at D:\Codes\PostPipe-2.0\node_modules\next\dist\compiled\webpack\bundle5.js:28:922493
+    at Hook.eval [as call] (eval at create (D:\Codes\PostPipe-2.0\node_modules\next\dist\compiled\webpack\bundle5.js:13:28636), <anonymous>:7:1)
+    at Hook.CALL_DELEGATE [as _call] (D:\Codes\PostPipe-2.0\node_modules\next\dist\compiled\webpack\bundle5.js:13:25906)
+    at D:\Codes\PostPipe-2.0\node_modules\next\dist\compiled\webpack\bundle5.js:28:131198
+    at tryRunOrWebpackError (D:\Codes\PostPipe-2.0\node_modules\next\dist\compiled\webpack\bundle5.js:28:312943)
+    at __webpack_require_module__ (D:\Codes\PostPipe-2.0\node_modules\next\dist\compiled\webpack\bundle5.js:28:131165)
+    at __nested_webpack_require_153728__ (D:\Codes\PostPipe-2.0\node_modules\next\dist\compiled\webpack\bundle5.js:28:130607)
+    at D:\Codes\PostPipe-2.0\node_modules\next\dist\compiled\webpack\bundle5.js:28:131454
+    at symbolIterator (D:\Codes\PostPipe-2.0\node_modules\next\dist\compiled\neo-async\async.js:1:14444)
+
+Generated code for D:\Codes\PostPipe-2.0\node_modules\next\dist\build\webpack\loaders\css-loader\src\index.js??ruleSet[1].rules[13].oneOf[12].use[2]!D:\Codes\PostPipe-2.0\node_modules\next\dist\build\webpack\loaders\postcss-loader\src\index.js??ruleSet[1].rules[13].oneOf[12].use[3]!D:\Codes\PostPipe-2.0\apps\dynamic\app\globals.css
+
+Import trace for requested module:
+./app/globals.css
+
+
+> Build failed because of webpack errors
+npm error Lifecycle script `build` failed with error:
+npm error code 1
+npm error path D:\Codes\PostPipe-2.0\apps\dynamic
+npm error workspace dynamic@0.1.0
+npm error location D:\Codes\PostPipe-2.0\apps\dynamic
+npm error command failed
+npm error command C:\WINDOWS\system32\cmd.exe /d /s /c next build

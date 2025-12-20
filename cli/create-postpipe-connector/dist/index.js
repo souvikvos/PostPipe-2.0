@@ -56,7 +56,6 @@ async function run() {
             choices: [
                 { title: 'Node.js Server (Typical)', value: 'node' },
                 { title: 'Docker Container', value: 'docker' },
-                // { title: 'Serverless (Vercel)', value: 'serverless' } // Future
             ]
         }
     ]);
@@ -86,13 +85,20 @@ async function run() {
     };
     if (response.dbType === 'mongodb') {
         dependencies['mongodb'] = '^5.7.0';
+        // Remove other adapters to prevent TS errors
+        fs_extra_1.default.removeSync(path_1.default.join(root, 'src/lib/db/postgres.ts'));
+        fs_extra_1.default.removeSync(path_1.default.join(root, 'src/lib/db/supabase.ts'));
     }
     else if (response.dbType === 'postgres') {
         dependencies['pg'] = '^8.11.3';
         devDeps['@types/pg'] = '^8.10.2';
+        fs_extra_1.default.removeSync(path_1.default.join(root, 'src/lib/db/mongodb.ts'));
+        fs_extra_1.default.removeSync(path_1.default.join(root, 'src/lib/db/supabase.ts'));
     }
     else if (response.dbType === 'supabase') {
         dependencies['@supabase/supabase-js'] = '^2.32.0';
+        fs_extra_1.default.removeSync(path_1.default.join(root, 'src/lib/db/mongodb.ts'));
+        fs_extra_1.default.removeSync(path_1.default.join(root, 'src/lib/db/postgres.ts'));
     }
     pkg.dependencies = { ...pkg.dependencies, ...dependencies };
     pkg.devDependencies = { ...pkg.devDependencies, ...devDeps };
@@ -108,20 +114,11 @@ POSTPIPE_CONNECTOR_SECRET=
 # Database Configuration
 DB_TYPE=${response.dbType}
 
-# Database Credentials (Fill based on selection)
-# MongoDB
-MONGODB_URI=mongodb://localhost:27017
-MONGODB_DB_NAME=postpipe
-MONGODB_COLLECTION=submissions
-
-# PostgreSQL
+# Database Credentials
+MONGODB_URI=mongodb://localhost:27017/postpipe
 POSTGRES_URI=postgresql://user:pass@localhost:5432/db
-POSTGRES_TABLE=postpipe_submissions
-
-# Supabase
 SUPABASE_URL=
 SUPABASE_SERVICE_KEY=
-SUPABASE_TABLE=postpipe_submissions
 `;
     fs_extra_1.default.writeFileSync(path_1.default.join(root, '.env'), envContent);
     fs_extra_1.default.writeFileSync(path_1.default.join(root, '.env.example'), envContent);

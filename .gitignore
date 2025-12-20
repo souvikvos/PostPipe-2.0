@@ -32,3 +32,4 @@ ts-debug.log*
 # vercel
 .vercel
 .env
+my-secure-bridge/.env.example

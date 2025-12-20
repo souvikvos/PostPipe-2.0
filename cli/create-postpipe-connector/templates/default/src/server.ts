@@ -30,6 +30,12 @@ app.post('/postpipe/ingest', async (req: Request, res: Response) => {
     const payload = req.body as PostPipeIngestPayload;
     // @ts-ignore
     const rawBody = req.rawBody; 
+    
+    if (!rawBody) {
+       console.error("❌ Error: Raw Body missing. Ensure middleware is configured.");
+       return res.status(400).json({ status: 'error', message: 'Payload missing' });
+    }
+
     const signature = req.headers['x-postpipe-signature'] as string;
     
     // 1. Verify Structure

@@ -44,6 +44,56 @@ export class MongoAdapter implements DatabaseAdapter {
     console.log(`[MongoAdapter] Saved submission ${payload.submissionId}`);
   }
 
+  async find(formId: string, options: { limit: number, cursor?: string }): Promise<{ data: any[], nextCursor?: string }> {
+    if (!this.db) await this.connect();
+
+    const query: any = { formId };
+    
+    // Cursor handling (using receivedAt timestamp for simple cursor)
+    // Real implementation ideally uses a robust cursor strategy (e.g. base64 encoded last ID + timestamp)
+    // Here we assume cursor is the last Item's _id (ObjectId) or a timestamp string.
+    // For simplicity, let's use standard ObjectId based pagination if _id is used, 
+    // or timestamp if we want consistent ordering.
+    // Given we insert with `_receivedAt`, let's try to simple string comparison if cursor is provided.
+    
+    if (options.cursor) {
+        // Assume cursor is base64(timestamp) or just an ID. 
+        // Let's use `_receivedAt` as cursor for time-based ordering.
+       try {
+         const lastTime = new Date(options.cursor);
+         if (!isNaN(lastTime.getTime())) {
+            query._receivedAt = { $lt: lastTime };
+         }
+       } catch (e) {
+         // ignore invalid cursor
+       }
+    }
+
+    const docs = await this.db!.collection(this.collectionName)
+      .find(query)
+      .sort({ _receivedAt: -1 })
+      .limit(options.limit + 1) // Fetch one extra to check for next page
+      .toArray();
+
+    const hasNext = docs.length > options.limit;
+    const data = hasNext ? docs.slice(0, options.limit) : docs;
+    
+    let nextCursor: string | undefined = undefined;
+    if (hasNext && data.length > 0) {
+       const lastItem = data[data.length - 1];
+       // @ts-ignore
+       if (lastItem._receivedAt) {
+          // @ts-ignore
+          nextCursor = lastItem._receivedAt.toISOString();
+       }
+    }
+
+    return {
+      data,
+      nextCursor
+    };
+  }
+
   async disconnect(): Promise<void> {
     await this.client.close();
   }

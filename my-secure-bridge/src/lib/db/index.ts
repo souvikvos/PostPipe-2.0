@@ -27,4 +27,8 @@ class MemoryAdapter implements DatabaseAdapter {
   async insert(payload: any) {
     console.log("[MemoryAdapter] Received:", JSON.stringify(payload, null, 2));
   }
+  async find(formId: string, options: { limit: number, cursor?: string }): Promise<{ data: any[], nextCursor?: string }> {
+    console.log("[MemoryAdapter] Find called");
+    return { data: [], nextCursor: undefined };
+  }
 }

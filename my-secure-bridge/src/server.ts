@@ -1,5 +1,6 @@
 import express, { Request, Response } from 'express';
 import { verifySignature, validateTimestamp, validatePayloadIds } from './lib/security';
+import { validateReadToken } from './lib/readSecurity';
 import { PostPipeIngestPayload } from './types';
 import { getAdapter } from './lib/db'; // We will implement this next
 import dotenv from 'dotenv';
@@ -15,6 +16,13 @@ app.use(express.json({
     req.rawBody = buf.toString();
   }
 }));
+
+// Enable CORS for Demo
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization, x-postpipe-signature");
+  next();
+});
 
 const CONNECTOR_ID = process.env.POSTPIPE_CONNECTOR_ID;
 const CONNECTOR_SECRET = process.env.POSTPIPE_CONNECTOR_SECRET;
@@ -100,6 +108,49 @@ app.post('/postpipe/ingest', async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Connector Error:", error);
     return res.status(500).json({ status: 'error', message: 'Internal Server Error' });
+  }
+
+});
+
+// @ts-ignore
+app.get('/api/postpipe/forms/:formId/submissions', async (req: Request, res: Response) => {
+  try {
+     const formId = req.params.formId;
+     const authHeader = req.headers.authorization;
+     
+     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+       return res.status(401).json({ error: 'Missing or Invalid Token' });
+     }
+
+     const token = authHeader.split(' ')[1];
+     
+     // Verify Token
+     if (!validateReadToken(token, formId, CONNECTOR_SECRET)) {
+       return res.status(403).json({ error: 'Forbidden: Invalid Token or Scope' });
+     }
+     
+     // Parse Query Params
+     const limit = parseInt(req.query.limit as string) || 50;
+     const cursor = req.query.cursor as string;
+     
+     if (limit > 100) {
+       return res.status(400).json({ error: 'Limit cannot exceed 100' });
+     }
+     
+     const adapter = getAdapter();
+     // Ensure find is implemented (it is now in Interface)
+     const result = await adapter.find(formId, { limit, cursor });
+     
+     return res.json({
+       formId,
+       count: result.data.length,
+       data: result.data,
+       nextCursor: result.nextCursor
+     });
+
+  } catch (error) {
+    console.error("Getter Error:", error);
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 

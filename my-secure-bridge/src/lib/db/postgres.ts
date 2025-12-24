@@ -55,6 +55,51 @@ export class PostgresAdapter implements DatabaseAdapter {
     ];
 
     await this.pool.query(query, values);
+    await this.pool.query(query, values);
     console.log(`[PostgresAdapter] Saved submission ${submissionId}`);
+  }
+
+  async find(formId: string, options: { limit: number, cursor?: string }): Promise<{ data: any[], nextCursor?: string }> {
+    const limit = Math.min(options.limit, 100); // Enforce max limit for safety
+    
+    let query = `
+      SELECT data, created_at, submission_id
+      FROM ${this.tableName}
+      WHERE form_id = $1
+    `;
+    
+    const params: any[] = [formId];
+    
+    if (options.cursor) {
+      query += ` AND created_at < $2`;
+      params.push(options.cursor); // Expects ISO string
+    }
+    
+    query += ` ORDER BY created_at DESC LIMIT $${params.length + 1}`;
+    params.push(limit + 1);
+
+    const res = await this.pool.query(query, params);
+    const rows = res.rows;
+    
+    const hasNext = rows.length > limit;
+    const data = hasNext ? rows.slice(0, limit) : rows;
+    
+    // Transform rows to match generic data shape if needed, 
+    // or just return the stored `data` JSON blob merged with some metadata.
+    const cleanData = data.map((row: any) => ({
+        ...row.data,
+        id: row.submission_id,
+        createdAt: row.created_at
+    }));
+
+    let nextCursor: string | undefined = undefined;
+    if (hasNext && data.length > 0) {
+      nextCursor = data[data.length - 1].created_at.toISOString();
+    }
+
+    return {
+      data: cleanData,
+      nextCursor
+    };
   }
 }

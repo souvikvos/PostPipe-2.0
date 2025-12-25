@@ -11,7 +11,7 @@ export async function registerConnectorAction(formData: FormData) {
   }
 
   try {
-     const connector = registerConnector(url, name);
+     const connector = await registerConnector(url, name);
      return { 
          success: true, 
          connectorId: connector.id, 

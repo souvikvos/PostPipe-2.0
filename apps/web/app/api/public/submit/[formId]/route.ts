@@ -8,13 +8,13 @@ export async function POST(
 ) {
   try {
     const formId = params.formId;
-    const form = getForm(formId);
+    const form = await getForm(formId);
 
     if (!form) {
       return NextResponse.json({ error: 'Form not found' }, { status: 404 });
     }
 
-    const connector = getConnector(form.connectorId);
+    const connector = await getConnector(form.connectorId);
     if (!connector) {
       return NextResponse.json({ error: 'Connector not provisioned' }, { status: 503 });
     }

@@ -1,7 +1,19 @@
-<form action="http://localhost:3000/api/public/submit/test1" method="POST">
+<form action="http://localhost:3000/api/public/submit/contact-us" method="POST">
     <div class="form-group">
-        <label>email</label>
-        <input type="email" name="email" required />
+        <label>Name</label>
+        <input type="text" name="Name" required />
+    </div>
+    <div class="form-group">
+        <label>phone number</label>
+        <input type="tel" name="phone number" required />
+    </div>
+    <div class="form-group">
+        <label>mail</label>
+        <input type="email" name="mail" />
+    </div>
+    <div class="form-group">
+        <label>descp</label>
+        <input type="text" name="descp" required />
     </div>
     <button type="submit">Submit</button>
 </form>

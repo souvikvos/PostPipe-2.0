@@ -19,7 +19,7 @@ export async function createFormAction(formData: FormData) {
   }
 
   try {
-     const form = createForm(connectorId, name, fields);
+     const form = await createForm(connectorId, name, fields);
      return { success: true, formId: form.id };
   } catch (e) {
       return { error: 'Failed to create form' };
@@ -27,5 +27,5 @@ export async function createFormAction(formData: FormData) {
 }
 
 export async function getConnectorsAction() {
-    return getConnectors();
+    return await getConnectors();
 }

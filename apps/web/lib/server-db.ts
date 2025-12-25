@@ -1,5 +1,4 @@
-import fs from 'fs';
-import path from 'path';
+import { MongoClient } from 'mongodb';
 
 // --- Types ---
 export interface Connector {
@@ -23,39 +22,49 @@ export interface Form {
   createdAt: string;
 }
 
-interface DB {
-  connectors: Connector[];
-  forms: Form[];
-}
-
 // --- Persistence ---
-const DB_PATH = path.join(process.cwd(), 'mock-db.json');
-
-function readDB(): DB {
-  if (!fs.existsSync(DB_PATH)) {
-    return { connectors: [], forms: [] };
-  }
-  try {
-    const data = fs.readFileSync(DB_PATH, 'utf-8');
-    return JSON.parse(data);
-  } catch (e) {
-    return { connectors: [], forms: [] };
-  }
+if (!process.env.MONGODB_URI) {
+  throw new Error('Invalid/Missing environment variable: "MONGODB_URI"');
 }
 
-function writeDB(db: DB) {
-  fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2));
+const uri = process.env.MONGODB_URI;
+const dbName = process.env.MONGODB_DB_NAME || 'postpipe_core';
+const options = {};
+
+let client;
+let clientPromise: Promise<MongoClient>;
+
+if (process.env.NODE_ENV === 'development') {
+  // In development mode, use a global variable so that the value
+  // is preserved across module reloads caused by HMR (Hot Module Replacement).
+  // @ts-ignore
+  if (!global._mongoClientPromise) {
+    client = new MongoClient(uri, options);
+    // @ts-ignore
+    global._mongoClientPromise = client.connect();
+  }
+  // @ts-ignore
+  clientPromise = global._mongoClientPromise;
+} else {
+  // In production mode, it's best to not use a global variable.
+  client = new MongoClient(uri, options);
+  clientPromise = client.connect();
+}
+
+async function getDB() {
+    const c = await clientPromise;
+    return c.db(dbName);
 }
 
 // --- Connectors ---
-export function registerConnector(url: string, name: string = 'My Connector'): Connector {
-  const db = readDB();
+export async function registerConnector(url: string, name: string = 'My Connector'): Promise<Connector> {
+  const db = await getDB();
   
   // Clean URL
   let cleanUrl = url.replace(/\/$/, ""); 
   
   // Check duplicates
-  const existing = db.connectors.find(c => c.url === cleanUrl);
+  const existing = await db.collection<Connector>('connectors').findOne({ url: cleanUrl });
   if (existing) return existing;
 
   const newConnector: Connector = {
@@ -65,30 +74,32 @@ export function registerConnector(url: string, name: string = 'My Connector'): C
     name
   };
 
-  db.connectors.push(newConnector);
-  writeDB(db);
+  await db.collection('connectors').insertOne(newConnector);
   return newConnector;
 }
 
-export function getConnector(id: string): Connector | undefined {
-  const db = readDB();
-  return db.connectors.find(c => c.id === id);
+export async function getConnector(id: string): Promise<Connector | undefined> {
+  const db = await getDB();
+  const res = await db.collection<Connector>('connectors').findOne({ id });
+  return res || undefined;
 }
 
-export function getConnectors(): Connector[] {
-    return readDB().connectors;
+export async function getConnectors(): Promise<Connector[]> {
+    const db = await getDB();
+    return db.collection<Connector>('connectors').find({}).toArray();
 }
 
 
 // --- Forms ---
-export function createForm(connectorId: string, name: string, fields: FormField[]): Form {
-  const db = readDB();
+export async function createForm(connectorId: string, name: string, fields: FormField[]): Promise<Form> {
+  const db = await getDB();
   
   // Simple slugify for ID
   const baseId = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
   let id = baseId;
   let counter = 1;
-  while (db.forms.find(f => f.id === id)) {
+
+  while (await db.collection('forms').findOne({ id })) {
       id = `${baseId}-${counter++}`;
   }
 
@@ -100,30 +111,28 @@ export function createForm(connectorId: string, name: string, fields: FormField[
     createdAt: new Date().toISOString()
   };
 
-  db.forms.push(newForm);
-  writeDB(db);
+  await db.collection('forms').insertOne(newForm);
   return newForm;
 }
 
-export function getForms(): Form[] {
-  return readDB().forms;
+export async function getForms(): Promise<Form[]> {
+  const db = await getDB();
+  return db.collection<Form>('forms').find({}).toArray();
 }
 
-export function getForm(id: string): Form | undefined {
-  return readDB().forms.find(f => f.id === id);
+export async function getForm(id: string): Promise<Form | undefined> {
+  const db = await getDB();
+  const res = await db.collection<Form>('forms').findOne({ id });
+  return res || undefined;
 }
 
-export function deleteConnector(id: string) {
-  const db = readDB();
-  db.connectors = db.connectors.filter(c => c.id !== id);
-  // Optional: Cascade delete forms? Let's keep it simple for now or yes? 
-  // Better to cascade delete forms associated with the connector to avoid orphans.
-  db.forms = db.forms.filter(f => f.connectorId !== id);
-  writeDB(db);
+export async function deleteConnector(id: string): Promise<void> {
+  const db = await getDB();
+  await db.collection('connectors').deleteOne({ id });
+  await db.collection('forms').deleteMany({ connectorId: id });
 }
 
-export function deleteForm(id: string) {
-  const db = readDB();
-  db.forms = db.forms.filter(f => f.id !== id);
-  writeDB(db);
+export async function deleteForm(id: string): Promise<void> {
+  const db = await getDB();
+  await db.collection('forms').deleteOne({ id });
 }

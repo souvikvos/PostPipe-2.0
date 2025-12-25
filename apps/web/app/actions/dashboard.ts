@@ -4,11 +4,11 @@ import crypto from 'crypto';
 import { getForms, getForm, getConnector, getConnectors, deleteForm, deleteConnector } from '../../lib/server-db';
 
 export async function getDashboardData() {
-  const forms = getForms();
+  const forms = await getForms();
   
   // Enhance forms with proper tokens/urls
-  const formsWithSecrets = forms.map(f => {
-      const connector = getConnector(f.connectorId);
+  const formsWithSecrets = await Promise.all(forms.map(async f => {
+      const connector = await getConnector(f.connectorId);
       if (!connector) return null;
 
       // Generate Read Token (Same logic as before, but dynamic secret)
@@ -35,19 +35,21 @@ export async function getDashboardData() {
           // The direct connector getter endpoint
           connectorGetterUrl: `${connector.url}/api/postpipe/forms/${f.id}/submissions`
       };
-  }).filter(Boolean);
+  }));
 
-  const connectors = getConnectors(); // Fetch connectors directly from DB util
+  const validForms = formsWithSecrets.filter(Boolean);
 
-  return { forms: formsWithSecrets, connectors };
+  const connectors = await getConnectors(); // Fetch connectors directly from DB util
+
+  return { forms: validForms, connectors };
 }
 
 export async function deleteFormAction(id: string) {
-    deleteForm(id);
+    await deleteForm(id);
     return { success: true };
 }
 
 export async function deleteConnectorAction(id: string) {
-    deleteConnector(id);
+    await deleteConnector(id);
     return { success: true };
 }

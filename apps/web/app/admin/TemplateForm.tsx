@@ -8,6 +8,30 @@ interface TemplateFormProps {
     isEdit?: boolean;
 }
 
+
+const DATABASES = [
+    {
+        name: "PostgreSQL",
+        logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg"
+    },
+    {
+        name: "MySQL",
+        logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mysql/mysql-original.svg"
+    },
+    {
+        name: "MongoDB",
+        logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mongodb/mongodb-original.svg"
+    },
+    {
+        name: "Redis",
+        logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/redis/redis-original.svg"
+    },
+    {
+        name: "Supabase",
+        logo: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/supabase/supabase-original.svg"
+    }
+];
+
 export default function TemplateForm({ initialData = {}, isEdit = false }: TemplateFormProps) {
     const router = useRouter();
     const [formData, setFormData] = useState({
@@ -20,10 +44,11 @@ export default function TemplateForm({ initialData = {}, isEdit = false }: Templ
         thumbnailUrl: initialData.thumbnailUrl || '',
         demoGifUrl: initialData.demoGifUrl || '',
         cli: initialData.cli || '',
-        aiPrompt: initialData.aiPrompt || '',
+
         npmPackageUrl: initialData.npmPackageUrl || '',
         version: initialData.version || '',
         isPublished: initialData.isPublished || false,
+        databaseConfigurations: initialData.databaseConfigurations || [],
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -34,6 +59,46 @@ export default function TemplateForm({ initialData = {}, isEdit = false }: Templ
             ...prev,
             [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value,
         }));
+    };
+
+    const addDatabase = () => {
+        setFormData((prev: any) => ({
+            ...prev,
+            databaseConfigurations: [
+                ...prev.databaseConfigurations,
+                { databaseName: '', prompt: '', logo: '' }
+            ]
+        }));
+    };
+
+    const removeDatabase = (index: number) => {
+        setFormData((prev: any) => ({
+            ...prev,
+            databaseConfigurations: prev.databaseConfigurations.filter((_: any, i: number) => i !== index)
+        }));
+    };
+
+    const updateDatabaseConfig = (index: number, field: string, value: string) => {
+        setFormData((prev: any) => {
+            const newConfigs = [...prev.databaseConfigurations];
+            if (field === 'databaseName') {
+                const db = DATABASES.find(d => d.name === value);
+                newConfigs[index] = {
+                    ...newConfigs[index],
+                    databaseName: value,
+                    logo: db?.logo || ''
+                };
+            } else {
+                newConfigs[index] = {
+                    ...newConfigs[index],
+                    [field]: value
+                };
+            }
+            return {
+                ...prev,
+                databaseConfigurations: newConfigs
+            };
+        });
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -212,19 +277,72 @@ export default function TemplateForm({ initialData = {}, isEdit = false }: Templ
                             </div>
                         </div>
 
+
+
                         <div className="sm:col-span-6">
-                            <label htmlFor="aiPrompt" className="block text-sm font-medium text-gray-700">
-                                AI Prompt (Tailored instructions)
-                            </label>
-                            <div className="mt-1">
-                                <textarea
-                                    id="aiPrompt"
-                                    name="aiPrompt"
-                                    rows={4}
-                                    value={formData.aiPrompt}
-                                    onChange={handleChange}
-                                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                                />
+                            <div className="flex justify-between items-center mb-4">
+                                <label className="block text-sm font-medium text-gray-700">
+                                    Database Configurations
+                                </label>
+                                <button
+                                    type="button"
+                                    onClick={addDatabase}
+                                    className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                >
+                                    Add Database
+                                </button>
+                            </div>
+
+                            <div className="space-y-4">
+                                {formData.databaseConfigurations.map((config: any, index: number) => (
+                                    <div key={index} className="p-4 border rounded-md bg-gray-50 space-y-4">
+                                        <div className="flex justify-between items-start">
+                                            <div className="flex-1 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                                <div>
+                                                    <label className="block text-xs font-medium text-gray-500">Database Type</label>
+                                                    <select
+                                                        value={config.databaseName}
+                                                        onChange={(e) => updateDatabaseConfig(index, 'databaseName', e.target.value)}
+                                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                                                    >
+                                                        <option value="">Select Database</option>
+                                                        {DATABASES.map(db => (
+                                                            <option key={db.name} value={db.name}>{db.name}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                                {config.logo && (
+                                                    <div className="flex items-center mt-4">
+                                                        <img src={config.logo} alt="Database Logo" className="h-8 w-8" />
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => removeDatabase(index)}
+                                                className="ml-4 text-red-600 hover:text-red-800"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                                                </svg>
+                                            </button>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-500">Specific AI Prompt</label>
+                                            <textarea
+                                                rows={3}
+                                                value={config.prompt}
+                                                onChange={(e) => updateDatabaseConfig(index, 'prompt', e.target.value)}
+                                                placeholder="Instructions specific to this database..."
+                                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                                            />
+                                        </div>
+                                    </div>
+                                ))}
+                                {formData.databaseConfigurations.length === 0 && (
+                                    <p className="text-sm text-gray-500 italic">No database configurations added yet.</p>
+                                )}
                             </div>
                         </div>
 

@@ -15,8 +15,10 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\""
   },
   "devDependencies": {
-    "turbo": "latest",
-    "prettier": "^3.0.0"
+    "prettier": "^3.0.0",
+    "turbo": "latest"
   },
-  "dependencies": {}
+  "dependencies": {
+    "mongoose": "^9.0.2"
+  }
 }

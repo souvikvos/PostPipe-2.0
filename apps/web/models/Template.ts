@@ -16,6 +16,11 @@ export interface ITemplate extends Document {
   npmPackageUrl: string;
   version?: string;
   isPublished: boolean;
+  databaseConfigurations?: {
+    databaseName: string;
+    logo?: string;
+    prompt: string;
+  }[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -37,6 +42,13 @@ const TemplateSchema: Schema = new Schema(
     npmPackageUrl: { type: String, required: true, trim: true },
     version: { type: String, trim: true },
     isPublished: { type: Boolean, default: false },
+    databaseConfigurations: [
+      {
+        databaseName: { type: String, required: true },
+        logo: { type: String },
+        prompt: { type: String, required: true },
+      }
+    ],
   },
   {
     timestamps: true, // Auto-generate createdAt and updatedAt

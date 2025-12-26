@@ -21,8 +21,9 @@ async function main() {
             message: 'Choose your database:',
             choices: [
                 { name: '1. MongoDB', value: 'mongodb' },
-                { name: '2. (coming soon)', value: 'coming_soon', disabled: true },
+                { name: '2. DocumentDB (PostPipe Compatible)', value: 'documentdb' },
             ],
+            default: 'mongodb'
         },
         {
             type: 'checkbox',
@@ -47,7 +48,15 @@ async function main() {
         process.exit(0);
     }
 
-    const spinner = ora('Scaffolding commerce features...').start();
+    if (answers.database === 'mongodb') {
+        await setupMongoDB(answers);
+    } else if (answers.database === 'documentdb') {
+        await setupDocumentDB(answers);
+    }
+}
+
+async function setupMongoDB(answers) {
+    const spinner = ora('Scaffolding commerce features (MongoDB)...').start();
 
     try {
         const projectRoot = process.cwd();
@@ -56,9 +65,14 @@ async function main() {
         const modelsDir = isSrcDir ? path.join('src', 'lib', 'models') : path.join('lib', 'models');
         const actionsDir = isSrcDir ? path.join('src', 'lib', 'actions') : path.join('lib', 'actions');
 
+        const templateDir = path.join(__dirname, 'mongodb', 'template');
+        if (!fs.existsSync(templateDir)) {
+            throw new Error(`Template directory not found at ${templateDir}`);
+        }
+
         // Helper to copy
         const copyTemplate = async (sourceSubDir, destSubDir) => {
-            const source = path.join(__dirname, sourceSubDir);
+            const source = path.join(templateDir, sourceSubDir);
             const dest = path.join(projectRoot, destSubDir);
             if (await fs.pathExists(source)) {
                 await fs.copy(source, dest);
@@ -101,6 +115,12 @@ async function main() {
         spinner.fail(chalk.red('Failed to scaffold features.'));
         console.error(error);
     }
+}
+
+async function setupDocumentDB(answers) {
+    const spinner = ora('Scaffolding commerce features (DocumentDB)...').start();
+    spinner.warn(chalk.yellow('DocumentDB templates are coming soon!'));
+    spinner.succeed(chalk.green('Done (Placeholder)'));
 }
 
 main();

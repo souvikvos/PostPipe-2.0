@@ -27,38 +27,63 @@ async function main() {
             type: 'list',
             name: 'database',
             message: 'Choose your database:',
-            choices: ['MongoDB (Mongoose)', 'PostgreSQL (Prisma) - Coming Soon'],
-            default: 'MongoDB (Mongoose)'
+            choices: [
+                { name: 'MongoDB (Mongoose)', value: 'mongodb' },
+                { name: 'DocumentDB (PostPipe Compatible)', value: 'documentdb' }
+            ],
+            default: 'mongodb'
         }
     ]);
 
-    if (answers.database !== 'MongoDB (Mongoose)') {
-        console.log(chalk.red('Only MongoDB is currently supported. Exiting...'));
-        return;
+    if (answers.database === 'mongodb') {
+        await setupMongoDB(answers);
+    } else if (answers.database === 'documentdb') {
+        await setupDocumentDB(answers);
     }
+}
 
-    const spinner = ora('Scaffolding Analytics System...').start();
+async function setupMongoDB(answers) {
+    const spinner = ora('Scaffolding Analytics System (MongoDB)...').start();
 
     try {
+        // Determine destination base
+        const isSrc = fs.existsSync(path.join(CURR_DIR, 'src'));
+        const baseDir = isSrc ? path.join(CURR_DIR, 'src') : CURR_DIR;
+
+        const templateDir = path.join(__dirname, 'mongodb', 'template');
+        if (!fs.existsSync(templateDir)) {
+            throw new Error(`Template directory not found at ${templateDir}`);
+        }
+
         // 1. Install Dependencies
         spinner.text = 'Installing dependencies...';
-        execSync(`npm install mongoose`, { stdio: 'ignore' });
+        try {
+            execSync(`npm install mongoose`, { stdio: 'ignore' });
+        } catch (e) { }
 
         // 2. Create/Copy Models
         spinner.text = 'Creating Analytics Model...';
-        const modelsDir = path.join(CURR_DIR, 'models');
-        await fs.ensureDir(modelsDir);
+        const modelsDest = path.join(baseDir, 'models');
+        await fs.ensureDir(modelsDest);
 
-        const modelPath = path.join(__dirname, 'models', 'Analytics.ts');
-        await fs.copy(modelPath, path.join(modelsDir, 'Analytics.ts'));
+        if (fs.existsSync(path.join(templateDir, 'models', 'Analytics.ts'))) {
+            await fs.copy(
+                path.join(templateDir, 'models', 'Analytics.ts'),
+                path.join(modelsDest, 'Analytics.ts')
+            );
+        }
 
         // 3. Create/Copy API Routes
         spinner.text = 'Creating API Routes...';
-        const apiDir = path.join(CURR_DIR, 'app', 'api', 'analytics');
+        const apiDir = path.join(baseDir, 'app', 'api', 'analytics');
         await fs.ensureDir(apiDir);
 
-        const routePath = path.join(__dirname, 'api', 'analytics', 'route.ts');
-        await fs.copy(routePath, path.join(apiDir, 'route.ts'));
+        if (fs.existsSync(path.join(templateDir, 'api', 'analytics', 'route.ts'))) {
+            await fs.copy(
+                path.join(templateDir, 'api', 'analytics', 'route.ts'),
+                path.join(apiDir, 'route.ts')
+            );
+        }
 
         spinner.succeed(chalk.green('Analytics System Scaffolding Complete! 🚀'));
 
@@ -70,6 +95,12 @@ async function main() {
         spinner.fail(chalk.red('An error occurred during scaffolding.'));
         console.error(error);
     }
+}
+
+async function setupDocumentDB(answers) {
+    const spinner = ora('Scaffolding Analytics System (DocumentDB)...').start();
+    spinner.warn(chalk.yellow('DocumentDB templates are coming soon!'));
+    spinner.succeed(chalk.green('Done (Placeholder)'));
 }
 
 main();

@@ -47,9 +47,9 @@ async function run() {
       message: 'Which database will you use?',
       choices: [
         { title: 'MongoDB (Recommended)', value: 'mongodb' },
+        { title: 'DocumentDB (PostPipe Compatible)', value: 'documentdb' },
         { title: 'PostgreSQL', value: 'postgres' },
         { title: 'Supabase', value: 'supabase' },
-        { title: 'SQLite (Development)', value: 'sqlite' },
       ]
     },
     {
@@ -65,13 +65,35 @@ async function run() {
 
   if (!response.dbType || !response.deployment) process.exit(1);
 
+  if (response.dbType === 'documentdb') {
+      console.log(chalk.yellow('DocumentDB templates are coming soon!'));
+      process.exit(0);
+  }
+
   // 2. Scaffold
   console.log();
   console.log(`Creating connector in ${chalk.green(root)}...`);
 
   fs.ensureDirSync(root);
   
-  const templateDir = path.join(__dirname, '../templates/default');
+  // Select template based on DB
+  let templateDir = '';
+  if (response.dbType === 'mongodb') {
+      templateDir = path.join(__dirname, 'mongodb', 'template');
+  } else if (response.dbType === 'postgres') {
+      templateDir = path.join(__dirname, 'postgres', 'template');
+  } else if (response.dbType === 'supabase') {
+      templateDir = path.join(__dirname, 'supabase', 'template');
+  } else {
+      // Fallback
+      templateDir = path.join(__dirname, 'templates', 'default');
+  }
+
+  if (!fs.existsSync(templateDir)) {
+      console.error(chalk.red(`Template not found at ${templateDir}`));
+      process.exit(1);
+  }
+
   fs.copySync(templateDir, root);
 
   // 3. Customize Package.json
@@ -94,18 +116,11 @@ async function run() {
 
   if (response.dbType === 'mongodb') {
     dependencies['mongodb'] = '^5.7.0';
-    // Remove other adapters to prevent TS errors
-    fs.removeSync(path.join(root, 'src/lib/db/postgres.ts'));
-    fs.removeSync(path.join(root, 'src/lib/db/supabase.ts'));
   } else if (response.dbType === 'postgres') {
     dependencies['pg'] = '^8.11.3';
     devDeps['@types/pg'] = '^8.10.2';
-    fs.removeSync(path.join(root, 'src/lib/db/mongodb.ts'));
-    fs.removeSync(path.join(root, 'src/lib/db/supabase.ts'));
   } else if (response.dbType === 'supabase') {
     dependencies['@supabase/supabase-js'] = '^2.32.0';
-    fs.removeSync(path.join(root, 'src/lib/db/mongodb.ts'));
-    fs.removeSync(path.join(root, 'src/lib/db/postgres.ts'));
   }
 
   pkg.dependencies = { ...pkg.dependencies, ...dependencies };

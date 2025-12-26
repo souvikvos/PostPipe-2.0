@@ -15,6 +15,16 @@ async function main() {
 
     const answers = await inquirer.prompt([
         {
+            type: 'list',
+            name: 'database',
+            message: 'Choose your database:',
+            choices: [
+                { name: '1. MongoDB', value: 'mongodb' },
+                { name: '2. DocumentDB (PostPipe Compatible)', value: 'documentdb' },
+            ],
+            default: 'mongodb'
+        },
+        {
             type: 'confirm',
             name: 'confirm',
             message: 'This will install middleware for Admin Route Protection. Proceed?',
@@ -27,25 +37,32 @@ async function main() {
         process.exit(0);
     }
 
-    const spinner = ora('Setting up admin infrastructure...').start();
+    if (answers.database === 'mongodb') {
+        await setupMongoDB();
+    } else if (answers.database === 'documentdb') {
+        await setupDocumentDB();
+    }
+}
+
+async function setupMongoDB() {
+    const spinner = ora('Setting up admin infrastructure (MongoDB)...').start();
 
     try {
         const projectRoot = process.cwd();
         const isSrcDir = fs.existsSync(path.join(projectRoot, 'src'));
 
-        // Middleware usually goes in root or src/
-        const middlewareDest = isSrcDir ? path.join(projectRoot, 'src', 'middleware.ts') : path.join(projectRoot, 'middleware.ts');
+        const templateDir = path.join(__dirname, 'mongodb', 'template');
+        if (!fs.existsSync(templateDir)) {
+            throw new Error(`Template directory not found at ${templateDir}`);
+        }
 
         // Helper to copy
         const copyTemplate = async (sourceSubDir, destPath) => {
-            const source = path.join(__dirname, sourceSubDir);
+            const source = path.join(templateDir, sourceSubDir);
             if (await fs.pathExists(source)) {
                 await fs.copy(source, destPath);
             }
         };
-
-        // Copy Middleware (Renaming it to avoid overwriting existing generic middleware if not careful, but usually we just overwrite or append. For now, create specific admin middleware util)
-        // Actually, let's create it as a helper function that can be used in the main middleware.
 
         const libDir = isSrcDir ? path.join('src', 'lib', 'auth') : path.join('lib', 'auth');
         await fs.ensureDir(path.join(projectRoot, libDir));
@@ -69,6 +86,12 @@ async function main() {
         spinner.fail(chalk.red('Failed to setup admin features.'));
         console.error(error);
     }
+}
+
+async function setupDocumentDB() {
+    const spinner = ora('Setting up admin infrastructure (DocumentDB)...').start();
+    spinner.warn(chalk.yellow('DocumentDB templates are coming soon!'));
+    spinner.succeed(chalk.green('Done (Placeholder)'));
 }
 
 main();

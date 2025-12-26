@@ -21,8 +21,9 @@ async function main() {
             message: 'Choose your database:',
             choices: [
                 { name: '1. MongoDB', value: 'mongodb' },
-                { name: '2. (coming soon)', value: 'coming_soon_1', disabled: true },
+                { name: '2. DocumentDB (PostPipe Compatible)', value: 'documentdb' },
             ],
+            default: 'mongodb'
         },
         {
             type: 'checkbox',
@@ -44,19 +45,25 @@ async function main() {
 
     if (answers.database === 'mongodb') {
         await setupMongoDB(answers.forms);
-    } else {
-        console.log('Selection not supported yet.');
+    } else if (answers.database === 'documentdb') {
+        await setupDocumentDB(answers.forms);
     }
 }
 
 async function setupMongoDB(forms) {
-    const spinner = ora('Initializing Form Submission APIs...').start();
+    const spinner = ora('Initializing Form Submission APIs (MongoDB)...').start();
 
     try {
         const targetDir = process.cwd();
-        // Templates are now in the package root
-        const apiSource = path.join(__dirname, 'api');
-        const libSource = path.join(__dirname, 'lib');
+        // Templates are now in mongodb/template
+        const templateDir = path.join(__dirname, 'mongodb', 'template');
+        const apiSource = path.join(templateDir, 'api');
+        const libSource = path.join(templateDir, 'lib');
+
+        // Check if template exists
+        if (!fs.existsSync(templateDir)) {
+            throw new Error(`Template directory not found at ${templateDir}`);
+        }
 
         // 1. Copy Template Files
         // Helper to check if src exists. We put forms in lib/forms usually.
@@ -95,16 +102,20 @@ async function setupMongoDB(forms) {
             const config = formConfig[form];
             if (config) {
                 // Copy Model
-                await fs.copy(
-                    path.join(libSource, 'models', config.model),
-                    path.join(modelsDest, config.model)
-                );
+                if (fs.existsSync(path.join(libSource, 'models', config.model))) {
+                    await fs.copy(
+                        path.join(libSource, 'models', config.model),
+                        path.join(modelsDest, config.model)
+                    );
+                }
 
                 // Copy API Route
-                await fs.copy(
-                    path.join(apiSource, config.apiDir),
-                    path.join(apiDest, config.apiDir)
-                );
+                if (fs.existsSync(path.join(apiSource, config.apiDir))) {
+                    await fs.copy(
+                        path.join(apiSource, config.apiDir),
+                        path.join(apiDest, config.apiDir)
+                    );
+                }
             }
         }
 
@@ -112,6 +123,8 @@ async function setupMongoDB(forms) {
         const dbConnectSource = path.join(libSource, 'dbConnect.ts');
         const dbConnectDest = path.join(baseDir, 'lib', 'dbConnect.ts');
         if (await fs.pathExists(dbConnectSource)) {
+            // Only copy if it doesn't default to something else, postpipe usually shares this.
+            // But we should copy it if missing.
             if (!(await fs.pathExists(dbConnectDest))) {
                 await fs.copy(dbConnectSource, dbConnectDest);
             }
@@ -124,7 +137,6 @@ async function setupMongoDB(forms) {
         await execa('npm', ['install', ...dependencies], { cwd: targetDir });
 
         // 3. Create/Update .env 
-        // (Just append if needed, mainly DB URI which might already be there)
         spinner.text = 'Configuring environment...';
         const envPath = path.join(targetDir, '.env');
         const envContent = `
@@ -152,6 +164,13 @@ async function setupMongoDB(forms) {
         spinner.fail('Setup failed.');
         console.error(error);
     }
+}
+
+async function setupDocumentDB(forms) {
+    const spinner = ora('Initializing DocumentDB Forms...').start();
+    // Placeholder
+    spinner.warn(chalk.yellow('DocumentDB templates are coming soon!'));
+    spinner.succeed(chalk.green('Done (Placeholder)'));
 }
 
 main().catch((err) => {

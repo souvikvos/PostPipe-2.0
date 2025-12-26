@@ -16,6 +16,16 @@ async function main() {
 
     const answers = await inquirer.prompt([
         {
+            type: 'list',
+            name: 'database',
+            message: 'Choose your database:',
+            choices: [
+                { name: '1. MongoDB', value: 'mongodb' },
+                { name: '2. DocumentDB (PostPipe Compatible)', value: 'documentdb' },
+            ],
+            default: 'mongodb'
+        },
+        {
             type: 'confirm',
             name: 'confirm',
             message: 'This will install "cloudinary" and create /api/upload. Proceed?',
@@ -28,16 +38,29 @@ async function main() {
         process.exit(0);
     }
 
-    const spinner = ora('Setting up file upload infrastructure...').start();
+    if (answers.database === 'mongodb') {
+        await setupMongoDB();
+    } else if (answers.database === 'documentdb') {
+        await setupDocumentDB();
+    }
+}
+
+async function setupMongoDB() {
+    const spinner = ora('Setting up file upload infrastructure (MongoDB)...').start();
 
     try {
         const projectRoot = process.cwd();
         const isSrcDir = fs.existsSync(path.join(projectRoot, 'src'));
         const apiDir = isSrcDir ? path.join('src', 'app', 'api') : path.join('app', 'api');
 
+        const templateDir = path.join(__dirname, 'mongodb', 'template');
+        if (!fs.existsSync(templateDir)) {
+            throw new Error(`Template directory not found at ${templateDir}`);
+        }
+
         // Helper to copy
         const copyTemplate = async (sourceSubDir, destSubDir) => {
-            const source = path.join(__dirname, sourceSubDir);
+            const source = path.join(templateDir, sourceSubDir);
             const dest = path.join(projectRoot, destSubDir);
             if (await fs.pathExists(source)) {
                 await fs.copy(source, dest);
@@ -65,6 +88,12 @@ CLOUDINARY_URL=cloudinary://<api_key>:<api_secret>@<cloud_name>
         spinner.fail(chalk.red('Failed to setup file upload.'));
         console.error(error);
     }
+}
+
+async function setupDocumentDB() {
+    const spinner = ora('Setting up file upload infrastructure (DocumentDB)...').start();
+    spinner.warn(chalk.yellow('DocumentDB templates are coming soon!'));
+    spinner.succeed(chalk.green('Done (Placeholder)'));
 }
 
 main();

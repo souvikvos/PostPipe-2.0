@@ -2,11 +2,11 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/lib/models/*": ["./lib/models/*"],
-      "@/lib/dbConnect": ["./lib/dbConnect.ts"],
-      "@/*": ["./*"]
+      "@/lib/models/*": ["./mongodb/template/lib/models/*"],
+      "@/lib/dbConnect": ["./mongodb/template/lib/dbConnect.ts"],
+      "@/*": ["./mongodb/template/*"]
     },
     "moduleResolution": "node"
   },
-  "include": ["api/**/*", "lib/**/*"]
+  "include": ["mongodb/template/api/**/*", "mongodb/template/lib/**/*"]
 }

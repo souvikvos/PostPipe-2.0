@@ -21,8 +21,9 @@ async function main() {
             message: 'Choose your database:',
             choices: [
                 { name: '1. MongoDB', value: 'mongodb' },
-                { name: '2. (coming soon)', value: 'coming_soon_1', disabled: true },
+                { name: '2. DocumentDB (PostPipe Compatible)', value: 'documentdb' },
             ],
+            default: 'mongodb'
         },
         {
             type: 'checkbox',
@@ -44,18 +45,24 @@ async function main() {
 
     if (answers.database === 'mongodb') {
         await setupCMS(answers.modules);
-    } else {
-        console.log('Selection not supported yet.');
+    } else if (answers.database === 'documentdb') {
+        await setupDocumentDBCMS(answers.modules);
     }
 }
 
 async function setupCMS(modules) {
-    const spinner = ora('Initializing CMS Features...').start();
+    const spinner = ora('Initializing CMS Features (MongoDB)...').start();
 
     try {
         const targetDir = process.cwd();
-        const apiSource = path.join(__dirname, 'api');
-        const libSource = path.join(__dirname, 'lib');
+        // Templates are now in mongodb/template
+        const templateDir = path.join(__dirname, 'mongodb', 'template');
+        const apiSource = path.join(templateDir, 'api');
+        const libSource = path.join(templateDir, 'lib');
+
+        if (!fs.existsSync(templateDir)) {
+            throw new Error(`Template directory not found at ${templateDir}`);
+        }
 
         // Determine destination base
         const isSrc = fs.existsSync(path.join(targetDir, 'src'));
@@ -93,18 +100,22 @@ async function setupCMS(modules) {
             if (config) {
                 // Copy Models
                 for (const modelFile of config.models) {
-                    await fs.copy(
-                        path.join(libSource, 'models', modelFile),
-                        path.join(modelsDest, modelFile)
-                    );
+                    if (fs.existsSync(path.join(libSource, 'models', modelFile))) {
+                        await fs.copy(
+                            path.join(libSource, 'models', modelFile),
+                            path.join(modelsDest, modelFile)
+                        );
+                    }
                 }
                 // Copy APIs
                 for (const apiDir of config.apis) {
-                    await fs.copy(
-                        path.join(apiSource, apiDir),
-                        path.join(apiDest, apiDir)
-                    );
-                    generatedApis.push(apiDir);
+                    if (fs.existsSync(path.join(apiSource, apiDir))) {
+                        await fs.copy(
+                            path.join(apiSource, apiDir),
+                            path.join(apiDest, apiDir)
+                        );
+                        generatedApis.push(apiDir);
+                    }
                 }
             }
         }
@@ -151,6 +162,12 @@ async function setupCMS(modules) {
         spinner.fail('CMS Setup failed.');
         console.error(error);
     }
+}
+
+async function setupDocumentDBCMS(modules) {
+    const spinner = ora('Initializing CMS Features (DocumentDB)...').start();
+    spinner.warn(chalk.yellow('DocumentDB templates are coming soon!'));
+    spinner.succeed(chalk.green('Done (Placeholder)'));
 }
 
 main().catch((err) => {

@@ -21,25 +21,32 @@ async function main() {
             message: 'Choose your database:',
             choices: [
                 { name: '1. MongoDB', value: 'mongodb' },
-                { name: '2. (coming soon)', value: 'coming_soon_1', disabled: true },
+                { name: '2. DocumentDB (PostPipe Compatible)', value: 'documentdb' },
             ],
+            default: 'mongodb'
         },
     ]);
 
     if (answers.database === 'mongodb') {
         await setupMongoDB();
-    } else {
-        console.log('Selection not supported yet.');
+    } else if (answers.database === 'documentdb') {
+        await setupDocumentDB();
     }
 }
 
 async function setupMongoDB() {
-    const spinner = ora('Initializing Appointment System...').start();
+    const spinner = ora('Initializing Appointment System (MongoDB)...').start();
 
     try {
         const targetDir = process.cwd();
-        const apiSource = path.join(__dirname, 'api');
-        const libSource = path.join(__dirname, 'lib');
+
+        const templateDir = path.join(__dirname, 'mongodb', 'template');
+        if (!fs.existsSync(templateDir)) {
+            throw new Error(`Template directory not found at ${templateDir}`);
+        }
+
+        const apiSource = path.join(templateDir, 'api');
+        const libSource = path.join(templateDir, 'lib');
 
         const isSrc = fs.existsSync(path.join(targetDir, 'src'));
         const baseDir = isSrc ? path.join(targetDir, 'src') : targetDir;
@@ -48,20 +55,24 @@ async function setupMongoDB() {
 
         // Copy Models
         const modelsDest = path.join(baseDir, 'lib', 'models');
-        await fs.copy(path.join(libSource, 'models'), modelsDest);
+        if (fs.existsSync(path.join(libSource, 'models'))) {
+            await fs.copy(path.join(libSource, 'models'), modelsDest);
+        }
 
         // Copy Actions
         const actionsDest = path.join(baseDir, 'lib', 'actions');
         // Check if we have an actions folder in libSource, assume yes
-        await fs.copy(path.join(libSource, 'actions'), actionsDest);
+        if (fs.existsSync(path.join(libSource, 'actions'))) {
+            await fs.copy(path.join(libSource, 'actions'), actionsDest);
+        }
 
         // Copy API Routes
         const apiDest = path.join(baseDir, 'app', 'api');
-        await fs.copy(apiSource, apiDest);
+        if (fs.existsSync(apiSource)) {
+            await fs.copy(apiSource, apiDest);
+        }
 
         // Copy dbConnect if not exists
-        // We assume dbConnect might be in libSource if we copy it there, but maybe we should just rely on user having it or copy a fallback
-        // Let's assume we copy it to libSource/dbConnect.ts first
         const dbConnectSource = path.join(libSource, 'dbConnect.ts');
         const dbConnectDest = path.join(baseDir, 'lib', 'dbConnect.ts');
         if (await fs.pathExists(dbConnectSource)) {
@@ -103,6 +114,12 @@ async function setupMongoDB() {
         spinner.fail('Setup failed.');
         console.error(error);
     }
+}
+
+async function setupDocumentDB() {
+    const spinner = ora('Initializing Appointment System (DocumentDB)...').start();
+    spinner.warn(chalk.yellow('DocumentDB templates are coming soon!'));
+    spinner.succeed(chalk.green('Done (Placeholder)'));
 }
 
 main().catch((err) => {

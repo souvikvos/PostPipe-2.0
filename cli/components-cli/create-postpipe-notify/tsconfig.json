@@ -16,8 +16,8 @@
     "incremental": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./mongodb/template/*"]
     }
   },
-  "include": ["**/*.ts", "**/*.tsx"]
+  "include": ["mongodb/template/**/*.ts", "mongodb/template/**/*.tsx"]
 }

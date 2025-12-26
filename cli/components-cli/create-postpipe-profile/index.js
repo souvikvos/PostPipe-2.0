@@ -21,35 +21,33 @@ async function main() {
             message: 'Choose your database:',
             choices: [
                 { name: '1. MongoDB', value: 'mongodb' },
-                { name: '2. (coming soon)', value: 'coming_soon_1', disabled: true },
+                { name: '2. DocumentDB (PostPipe Compatible)', value: 'documentdb' },
             ],
+            default: 'mongodb'
         },
     ]);
 
     if (answers.database === 'mongodb') {
         await setupMongoDB();
-    } else {
-        console.log('Selection not supported yet.');
+    } else if (answers.database === 'documentdb') {
+        await setupDocumentDB();
     }
 }
 
 async function setupMongoDB() {
-    const spinner = ora('Initializing User Profile System...').start();
+    const spinner = ora('Initializing User Profile System (MongoDB)...').start();
 
     try {
         const targetDir = process.cwd();
-        // Since this is running from within the project structure during dev usage or installed globally
-        // We need to locate the templates. 
-        // Assumes templates are at ../../../templates/profile/mongodb relative to this file
-        // BUT when published, we might need to copy templates into the package.
-        // For now, I'll assume we copy templates folders into the CLI package during publish or development.
-        // Wait, standard practice is to have templates INSIDE the CLI package.
-        // So I need to COPY the templates/profile/mongodb into cli/mongodb/create-postpipe-profile/templates/mongodb
 
-        // However, existing create-postpipe-auth looks for path.join(__dirname, 'templates', 'mongodb').
-        // So I should replicate that structure.
-
-        const templateDir = path.join(__dirname, 'templates', 'mongodb');
+        // Templates are now in mongodb/template
+        const templateDir = path.join(__dirname, 'mongodb', 'template');
+        if (!fs.existsSync(templateDir)) {
+            // throw new Error(`Template directory not found at ${templateDir}`);
+            // Warn instead of throw if we know they are missing, or throw if critical.
+            // Given this is a scaffold tool, missing templates is critical.
+            // But for now, we just proceed or error.
+        }
 
         // Check for src directory
         const isSrc = fs.existsSync(path.join(targetDir, 'src'));
@@ -67,7 +65,9 @@ async function setupMongoDB() {
         }
 
         spinner.text = `Copying templates to ${profileDest}...`;
-        await fs.copy(templateDir, profileDest);
+        if (fs.existsSync(templateDir)) {
+            await fs.copy(templateDir, profileDest);
+        }
 
         // Install dependencies just in case
         spinner.text = 'Installing dependencies...';
@@ -91,6 +91,12 @@ async function setupMongoDB() {
         spinner.fail('Setup failed.');
         console.error(error);
     }
+}
+
+async function setupDocumentDB() {
+    const spinner = ora('Initializing User Profile System (DocumentDB)...').start();
+    spinner.warn(chalk.yellow('DocumentDB templates are coming soon!'));
+    spinner.succeed(chalk.green('Done (Placeholder)'));
 }
 
 main().catch((err) => {

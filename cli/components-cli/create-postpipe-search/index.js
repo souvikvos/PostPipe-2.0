@@ -15,6 +15,16 @@ async function main() {
 
     const answers = await inquirer.prompt([
         {
+            type: 'list',
+            name: 'database',
+            message: 'Choose your database:',
+            choices: [
+                { name: '1. MongoDB', value: 'mongodb' },
+                { name: '2. DocumentDB (PostPipe Compatible)', value: 'documentdb' },
+            ],
+            default: 'mongodb'
+        },
+        {
             type: 'confirm',
             name: 'confirm',
             message: 'This will install the "APIFeatures" utility. Proceed?',
@@ -27,16 +37,29 @@ async function main() {
         process.exit(0);
     }
 
-    const spinner = ora('Setting up search utilities...').start();
+    if (answers.database === 'mongodb') {
+        await setupMongoDB();
+    } else if (answers.database === 'documentdb') {
+        await setupDocumentDB();
+    }
+}
+
+async function setupMongoDB() {
+    const spinner = ora('Setting up search utilities (MongoDB)...').start();
 
     try {
         const projectRoot = process.cwd();
         const isSrcDir = fs.existsSync(path.join(projectRoot, 'src'));
         const utilsDir = isSrcDir ? path.join('src', 'lib', 'utils') : path.join('lib', 'utils');
 
+        const templateDir = path.join(__dirname, 'mongodb', 'template');
+        if (!fs.existsSync(templateDir)) {
+            throw new Error(`Template directory not found at ${templateDir}`);
+        }
+
         // Helper to copy
         const copyTemplate = async (sourceSubDir, destSubDir) => {
-            const source = path.join(__dirname, sourceSubDir);
+            const source = path.join(templateDir, sourceSubDir);
             const dest = path.join(projectRoot, destSubDir);
             if (await fs.pathExists(source)) {
                 await fs.copy(source, dest);
@@ -65,6 +88,12 @@ async function main() {
         spinner.fail(chalk.red('Failed to setup search utilities.'));
         console.error(error);
     }
+}
+
+async function setupDocumentDB() {
+    const spinner = ora('Setting up search utilities (DocumentDB)...').start();
+    spinner.warn(chalk.yellow('DocumentDB templates are coming soon!'));
+    spinner.succeed(chalk.green('Done (Placeholder)'));
 }
 
 main();

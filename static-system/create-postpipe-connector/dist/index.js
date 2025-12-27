@@ -44,9 +44,9 @@ async function run() {
             message: 'Which database will you use?',
             choices: [
                 { title: 'MongoDB (Recommended)', value: 'mongodb' },
-                { title: 'DocumentDB (PostPipe Compatible)', value: 'documentdb' },
                 { title: 'PostgreSQL', value: 'postgres' },
                 { title: 'Supabase', value: 'supabase' },
+                { title: 'SQLite (Development)', value: 'sqlite' },
             ]
         },
         {
@@ -61,36 +61,11 @@ async function run() {
     ]);
     if (!response.dbType || !response.deployment)
         process.exit(1);
-    if (response.dbType === 'documentdb') {
-        console.log(chalk_1.default.yellow('DocumentDB templates are coming soon!'));
-        process.exit(0);
-    }
     // 2. Scaffold
     console.log();
     console.log(`Creating connector in ${chalk_1.default.green(root)}...`);
     fs_extra_1.default.ensureDirSync(root);
-    // Select template based on DB
-    // Assumes running from dist/ (so __dirname is dist/) and templates are in root specific folders
-    // OR running from root (via ts-node).
-    const baseDir = __dirname.endsWith('dist') ? path_1.default.join(__dirname, '..') : __dirname;
-    let templateDir = '';
-    if (response.dbType === 'mongodb') {
-        templateDir = path_1.default.join(baseDir, 'mongodb', 'template');
-    }
-    else if (response.dbType === 'postgres') {
-        templateDir = path_1.default.join(baseDir, 'postgres', 'template');
-    }
-    else if (response.dbType === 'supabase') {
-        templateDir = path_1.default.join(baseDir, 'supabase', 'template');
-    }
-    else {
-        // Fallback
-        templateDir = path_1.default.join(baseDir, 'templates', 'default');
-    }
-    if (!fs_extra_1.default.existsSync(templateDir)) {
-        console.error(chalk_1.default.red(`Template not found at ${templateDir}`));
-        process.exit(1);
-    }
+    const templateDir = path_1.default.join(__dirname, '../templates/default');
     fs_extra_1.default.copySync(templateDir, root);
     // 3. Customize Package.json
     const pkgPath = path_1.default.join(root, 'package.json');
@@ -110,13 +85,20 @@ async function run() {
     };
     if (response.dbType === 'mongodb') {
         dependencies['mongodb'] = '^5.7.0';
+        // Remove other adapters to prevent TS errors
+        fs_extra_1.default.removeSync(path_1.default.join(root, 'src/lib/db/postgres.ts'));
+        fs_extra_1.default.removeSync(path_1.default.join(root, 'src/lib/db/supabase.ts'));
     }
     else if (response.dbType === 'postgres') {
         dependencies['pg'] = '^8.11.3';
         devDeps['@types/pg'] = '^8.10.2';
+        fs_extra_1.default.removeSync(path_1.default.join(root, 'src/lib/db/mongodb.ts'));
+        fs_extra_1.default.removeSync(path_1.default.join(root, 'src/lib/db/supabase.ts'));
     }
     else if (response.dbType === 'supabase') {
         dependencies['@supabase/supabase-js'] = '^2.32.0';
+        fs_extra_1.default.removeSync(path_1.default.join(root, 'src/lib/db/mongodb.ts'));
+        fs_extra_1.default.removeSync(path_1.default.join(root, 'src/lib/db/postgres.ts'));
     }
     pkg.dependencies = { ...pkg.dependencies, ...dependencies };
     pkg.devDependencies = { ...pkg.devDependencies, ...devDeps };

@@ -28,14 +28,6 @@
     "@types/fs-extra": "^11.0.1",
     "@types/node": "^20.5.0",
     "@types/prompts": "^2.4.4",
-    "@types/prompts": "^2.4.4",
     "typescript": "^5.1.6"
-  },
-  "files": [
-    "dist",
-    "mongodb",
-    "postgres",
-    "supabase",
-    "templates"
-  ]
+  }
 }

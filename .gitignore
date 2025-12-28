@@ -34,3 +34,5 @@ ts-debug.log*
 .vercel
 .env
 my-secure-bridge/.env.example
+test.html
+test.html

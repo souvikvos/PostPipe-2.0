@@ -1,0 +1,23 @@
+{
+  "name": "create-postpipe-docs",
+  "version": "1.0.0",
+  "description": "Scaffolds the PostPipe documentation UI.",
+  "main": "index.js",
+  "type": "module",
+  "bin": {
+    "create-postpipe-docs": "./index.js"
+  },
+  "keywords": [
+    "postpipe",
+    "docs",
+    "generator"
+  ],
+  "author": "PostPipe",
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "fs-extra": "^11.2.0",
+    "inquirer": "^9.2.14",
+    "ora": "^8.0.1"
+  }
+}

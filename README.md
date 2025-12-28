@@ -1,7 +1,16 @@
 # PostPipe 2.0 Lab 🧪
 
 Welcome to the development and testing ground for PostPipe 2.0.
-This repository contains the CLI tools, the API simulation, and the "Dynamic Lab" for testing integrations.
+
+**[📚 Full Documentation is available here](./documentation/README.md)**
+
+## What is this?
+
+This repository contains:
+
+1.  **Apps**: The SaaS Dashboard and "Dynamic Lab" simulation (`apps/web`).
+2.  **CLI**: The suite of tools for scaffolding Auth, Connectors, and more (`cli/`).
+3.  **Packages**: Shared UI components (`packages/ui`).
 
 ## 🚀 Quick Start (Connector Demo)
 
@@ -10,12 +19,11 @@ We have a fully simulated environment to test the **Zero Trust Connector** flow 
 ### Prerequisites
 
 - Node.js 18+
-- Docker (Optional, if testing container deployment)
 - MongoDB / Postgres (Local or Cloud)
 
 ### Step 1: Start the SaaS Simulation
 
-Run the "Dynamic Lab" (Next.js App) which hosts the Dashboard and Mock Ingest API.
+Run the "Dynamic Lab" (Next.js App) which hosts the Dashboard.
 
 ```bash
 npm run dev:lab
@@ -33,12 +41,12 @@ node cli/create-postpipe-connector/dist/index.js my-test-connector
 # 2. Install & Configure
 cd my-test-connector
 npm install
+```
 
-# 3. CRITICAL: Change Port to 3001
-# Open .env and set:
-# PORT=3001
+**CRITICAL**: Open `.env` in `my-test-connector` and set `PORT=3001` (to avoid conflict with the Lab).
 
-# 4. Start Connector
+```bash
+# 3. Start Connector
 npm run dev
 ```
 
@@ -46,32 +54,24 @@ npm run dev
 
 1.  Open [http://localhost:3000/connector-demo](http://localhost:3000/connector-demo).
 2.  Enter your Connector URL: `http://localhost:3001/postpipe/ingest`
-3.  Click **Generate Credentials**.
-4.  Copy the `POSTPIPE_CONNECTOR_ID` and `SECRET` to your connector's `.env`.
-5.  Restart the connector terminal.
-6.  Submit the form on the Demo Page!
+3.  Click **Generate Credentials** and add them to your connector's `.env`.
+4.  Restart connector, then Submit the form on the Demo Page!
 
 ---
 
-## 📂 Project Structure
+## 📂 Documentation
 
-- `cli/` - Source code for all CLI tools (`create-postpipe-auth`, `create-postpipe-connector`, etc).
-- `src/dynamic-lab/` - The Next.js application simulating the SaaS Dashboard.
-- `src/static-server/` - Legacy logic (moved to dynamic-lab).
+- [**Getting Started Guide**](./documentation/getting-started.md)
+- [**CLI Tools Reference**](./documentation/cli/index.md)
+- [**Architecture Overview**](./documentation/architecture.md)
 
-## 🛠️ CLI Tools
-
-| Command                     | Description                                   |
-| :-------------------------- | :-------------------------------------------- |
-| `create-postpipe-connector` | Scaffolds the self-hosted database connector. |
-| `create-postpipe-auth`      | Scaffolds authentication logic.               |
+For deep dives, please check the [documentation](./documentation/README.md) folder.
 
 ## 🐛 Troubleshooting
 
 **"Connection Refused"**
 
 - Ensure your Connector is running on a _different_ port (3001) than the Lab (3000).
-- Check your `.env` config.
 
 **"Invalid Signature"**
 

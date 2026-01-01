@@ -10,8 +10,8 @@ export class MongoAdapter implements DatabaseAdapter {
 
   constructor() {
     this.uri = process.env.MONGODB_URI || '';
-    this.dbName = process.env.MONGODB_DB_NAME || 'postpipe_data';
-    this.collectionName = process.env.MONGODB_COLLECTION || 'submissions';
+    this.dbName = process.env.MONGODB_DB_NAME || 'postpipe';
+    this.collectionName = process.env.MONGODB_COLLECTION || 'submissions'; // Fallback only
 
     if (!this.uri) {
       throw new Error("MONGODB_URI is required for MongoAdapter");
@@ -36,7 +36,10 @@ export class MongoAdapter implements DatabaseAdapter {
     // Usually we want the metadata too (submissionId, timestamp).
     // Let's store the whole object.
     
-    await this.db!.collection(this.collectionName).insertOne({
+    // Use Form Name as collection, fallback to Form ID, fallback to default
+    const targetCollection = payload.formName || payload.formId || this.collectionName;
+    
+    await this.db!.collection(targetCollection).insertOne({
       ...payload,
       _receivedAt: new Date()
     });

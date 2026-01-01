@@ -1,14 +1,17 @@
 import express, { Request, Response } from 'express';
 import { verifySignature, validateTimestamp, validatePayloadIds } from './lib/security';
-import { validateReadToken } from './lib/readSecurity';
 import { PostPipeIngestPayload } from './types';
 import { getAdapter } from './lib/db'; // We will implement this next
 import dotenv from 'dotenv';
+import cors from 'cors';
 
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3002;
+
+// Enable CORS for all routes
+app.use(cors());
 
 // IMPORTANT: We need the raw body for signature verification
 app.use(express.json({
@@ -16,18 +19,6 @@ app.use(express.json({
     req.rawBody = buf.toString();
   }
 }));
-
-app.use((req, res, next) => {
-  console.log(`[Request] ${req.method} ${req.url}`);
-  next();
-});
-
-// Enable CORS for Demo
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization, x-postpipe-signature");
-  next();
-});
 
 const CONNECTOR_ID = process.env.POSTPIPE_CONNECTOR_ID;
 const CONNECTOR_SECRET = process.env.POSTPIPE_CONNECTOR_SECRET;
@@ -103,60 +94,41 @@ app.post('/postpipe/ingest', async (req: Request, res: Response) => {
     }
 
     // 4. Persistence
+    console.log("[Server] Getting adapter...");
     const adapter = getAdapter();
+    console.log("[Server] Connecting to DB...");
     await adapter.connect();
+    console.log("[Server] Inserting payload...");
     await adapter.insert(payload);
     
     // Return Success
+    console.log("[Server] Success!");
     return res.status(200).json({ status: 'ok', stored: true });
 
   } catch (error) {
-    console.error("Connector Error:", error);
-    return res.status(500).json({ status: 'error', message: 'Internal Server Error' });
+    console.error("Connector Error Stack:", error);
+    return res.status(500).json({ status: 'error', message: 'Internal Server Error', details: String(error) });
   }
-
 });
 
 // @ts-ignore
 app.get('/api/postpipe/forms/:formId/submissions', async (req: Request, res: Response) => {
-  try {
-     const formId = req.params.formId;
-     const authHeader = req.headers.authorization;
-     
-     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-       return res.status(401).json({ error: 'Missing or Invalid Token' });
-     }
-
-     const token = authHeader.split(' ')[1];
-     
-     // Verify Token
-     if (!validateReadToken(token, formId, CONNECTOR_SECRET)) {
-       return res.status(403).json({ error: 'Forbidden: Invalid Token or Scope' });
-     }
-     
-     // Parse Query Params
-     const limit = parseInt(req.query.limit as string) || 50;
-     const cursor = req.query.cursor as string;
-     
-     if (limit > 100) {
-       return res.status(400).json({ error: 'Limit cannot exceed 100' });
-     }
-     
-     const adapter = getAdapter();
-     // Ensure find is implemented (it is now in Interface)
-     const result = await adapter.find(formId, { limit, cursor });
-     
-     return res.json({
-       formId,
-       count: result.data.length,
-       data: result.data,
-       nextCursor: result.nextCursor
-     });
-
-  } catch (error) {
-    console.error("Getter Error:", error);
-    return res.status(500).json({ error: 'Internal Server Error' });
-  }
+    try {
+        const { formId } = req.params;
+        const limit = parseInt(req.query.limit as string) || 50;
+        
+        console.log(`[Server] Querying submissions for form: ${formId}`);
+        
+        const adapter = getAdapter();
+        // Ensure strictly connected/reconnected if needed
+        await adapter.connect(); 
+        
+        const data = await adapter.query(formId, limit);
+        return res.json({ status: 'ok', data });
+    } catch (e) {
+        console.error("Query Error:", e);
+        return res.status(500).json({ status: 'error', message: String(e) });
+    }
 });
 
 app.listen(PORT, () => {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createFormAction, getConnectorsAction } from '../actions/builder';
+import { createFormAction, getConnectorsAction, addDatabaseAction } from '../actions/builder';
 import Link from 'next/link';
 
 interface FormField {
@@ -16,6 +16,7 @@ export default function BuilderPage() {
 
     const [name, setName] = useState('');
     const [connectorId, setConnectorId] = useState('');
+    const [targetDb, setTargetDb] = useState('');
     const [fields, setFields] = useState<FormField[]>([
         { name: 'email', type: 'email', required: true }
     ]);
@@ -53,6 +54,7 @@ export default function BuilderPage() {
         const formData = new FormData();
         formData.append('name', name);
         formData.append('connectorId', connectorId);
+        formData.append('targetDb', targetDb);
         formData.append('fields', JSON.stringify(fields));
 
         const res = await createFormAction(formData);
@@ -151,6 +153,51 @@ ${fields.map(f => `  <div class="form-group">
                             >
                                 {connectors.map(c => <option key={c.id} value={c.id}>{c.name} ({c.url})</option>)}
                             </select>
+                        </div>
+                        <div className="md:col-span-2">
+                            <label className="block text-sm font-medium text-white mb-1">Target Database</label>
+                            <div className="flex gap-2">
+                                <select
+                                    value={targetDb}
+                                    onChange={(e) => setTargetDb(e.target.value)}
+                                    className="flex-1 bg-neutral-950 border border-neutral-800 rounded p-2.5 text-neutral-300 focus:border-emerald-500 outline-none"
+                                >
+                                    <option value="">Default (Main Database)</option>
+                                    {/* Find selected connector to show its DBs */}
+                                    {connectors.find(c => c.id === connectorId)?.databases?.map((db: string) => (
+                                        <option key={db} value={db}>{db.charAt(0).toUpperCase() + db.slice(1)} (MONGODB_URI_{db.toUpperCase()})</option>
+                                    ))}
+                                </select>
+                                <button
+                                    onClick={async () => {
+                                        const newDbId = prompt("Enter new Database ID (e.g. 'marketing' or 'secondary'):\n\nThis will look for an env var named MONGODB_URI_{ID_YOU_ENTER}");
+                                        if (newDbId) {
+                                            // Smart handling: Remove MONGODB_URI_ if user typed it
+                                            let cleanId = newDbId.trim();
+                                            if (cleanId.toUpperCase().startsWith('MONGODB_URI_')) {
+                                                cleanId = cleanId.substring(12);
+                                            }
+
+                                            // Allow lowercase, numbers, and underscores
+                                            const normalizedId = cleanId.toLowerCase().replace(/[^a-z0-9_]/g, '');
+
+                                            if (!normalizedId) return;
+
+                                            await addDatabaseAction(connectorId, normalizedId);
+                                            // Reload connectors to show new DB
+                                            const data = await getConnectorsAction();
+                                            setConnectors(data);
+                                            setTargetDb(normalizedId);
+
+                                            alert(`Added! Ensure you set 'MONGODB_URI_${normalizedId.toUpperCase()}' in your connector environment.`);
+                                        }
+                                    }}
+                                    className="px-3 py-2 bg-neutral-800 text-neutral-300 rounded hover:bg-neutral-700 text-sm border border-neutral-700 hover:text-white transition-colors"
+                                >
+                                    + Add DB
+                                </button>
+                            </div>
+                            <p className="text-xs text-neutral-500 mt-1">Select a database ID. Ensure <code>MONGODB_URI_ID</code> is set in your connector env vars.</p>
                         </div>
                     </div>
 

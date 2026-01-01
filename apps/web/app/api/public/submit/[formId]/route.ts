@@ -39,6 +39,8 @@ export async function POST(
     const submissionId = `sub_${Math.random().toString(36).substr(2, 9)}`;
     const payload = {
         formId,
+        formName: form.name,
+        targetDb: form.targetDb,
         submissionId,
         timestamp,
         data,

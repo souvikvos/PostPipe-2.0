@@ -18,6 +18,7 @@ export interface Form {
   id: string; // Slug/ID e.g. "contact-us"
   name: string;
   connectorId: string;
+  targetDb?: string;
   fields: FormField[];
   createdAt: string;
 }
@@ -94,12 +95,22 @@ export async function getConnector(id: string): Promise<Connector | undefined> {
 
 export async function getConnectors(): Promise<Connector[]> {
     const db = await getDB();
-    return db.collection<Connector>('connectors').find({}).toArray();
+    const docs = await db.collection('connectors').find({}).toArray();
+    // @ts-ignore
+    return docs.map(d => ({ ...d, _id: d._id.toString() }));
 }
 
 
+export async function addDatabaseToConnector(connectorId: string, dbId: string): Promise<void> {
+    const db = await getDB();
+    await db.collection('connectors').updateOne(
+        { id: connectorId },
+        { $addToSet: { databases: dbId } } // Use addToSet to avoid duplicates
+    );
+}
+
 // --- Forms ---
-export async function createForm(connectorId: string, name: string, fields: FormField[]): Promise<Form> {
+export async function createForm(connectorId: string, name: string, fields: FormField[], targetDb?: string): Promise<Form> {
   const db = await getDB();
   
   // Simple slugify for ID
@@ -115,6 +126,7 @@ export async function createForm(connectorId: string, name: string, fields: Form
     id,
     name,
     connectorId,
+    targetDb,
     fields,
     createdAt: new Date().toISOString()
   };

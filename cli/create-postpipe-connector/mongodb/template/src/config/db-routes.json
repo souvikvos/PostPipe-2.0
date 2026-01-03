@@ -1,0 +1,20 @@
+{
+  "databases": {
+    "default": {
+      "uri": "env:MONGODB_URI",
+      "dbName": "postpipe"
+    },
+    "secondary": {
+      "uri": "env:MONGODB_URI_SECONDARY",
+      "dbName": "postpipe_secondary"
+    }
+  },
+  "defaultTarget": "default",
+  "rules": [
+    {
+      "field": "targetDb",
+      "match": "^secondary$",
+      "target": "secondary"
+    }
+  ]
+}

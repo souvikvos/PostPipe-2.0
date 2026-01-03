@@ -1,5 +1,5 @@
 import { MongoClient, Db } from 'mongodb';
-import { DatabaseAdapter, PostPipeIngestPayload } from '../../types';
+import { DatabaseAdapter, PostPipeIngestPayload } from './types';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -42,11 +42,13 @@ export class MongoAdapter implements DatabaseAdapter {
 
   private loadConfig() {
     try {
-      // Try to load db-routes.json from src/config or config/
+      // Try to load db-routes.json from various locations
+      // Note: In shared package, process.cwd() might be the app root (e.g. apps/web or my-connector)
       const possiblePaths = [
         path.join(process.cwd(), 'src', 'config', 'db-routes.json'),
         path.join(process.cwd(), 'config', 'db-routes.json'),
-        path.join(__dirname, '..', '..', 'config', 'db-routes.json')
+        // Fallback for when running deeply nested or in different structures
+        path.join(process.cwd(), '..', 'config', 'db-routes.json') 
       ];
 
       for (const p of possiblePaths) {
@@ -94,7 +96,7 @@ export class MongoAdapter implements DatabaseAdapter {
         console.log(`[MongoAdapter] Dynamic Logic: Found ${dynamicKey}, routing to '${payload.targetDb}'`);
         return { uri: dynamicUri, dbName: `postpipe_${payload.targetDb}` }; 
       } else {
-         console.warn(`[MongoAdapter] Warning: targetDb '${payload.targetDb}' requested but env var '${dynamicKey}' not found. Available keys: ${Object.keys(process.env).filter(k => k.startsWith('MONGODB_URI_')).join(', ')}`);
+         console.warn(`[MongoAdapter] Warning: targetDb '${payload.targetDb}' requested but env var '${dynamicKey}' not found.`);
          console.warn(`[MongoAdapter] Falling back to default routing logic.`);
       }
     }
@@ -154,9 +156,9 @@ export class MongoAdapter implements DatabaseAdapter {
     }
   }
 
-  async insert(payload: PostPipeIngestPayload): Promise<void> {
+  async insert(submission: PostPipeIngestPayload): Promise<void> {
     // 1. Resolve which DB to use based on payload
-    const { uri, dbName } = this.getTargetConfig(payload);
+    const { uri, dbName } = this.getTargetConfig(submission);
 
     if (!uri) throw new Error("No MongoDB URI resolved.");
 
@@ -165,11 +167,11 @@ export class MongoAdapter implements DatabaseAdapter {
     const db = client.db(dbName);
     
     // 3. Determine Collection (Dynamic logic from previous task via payload)
-    const targetCollection = payload.formName || payload.formId || this.collectionName;
+    const targetCollection = submission.formName || submission.formId || this.collectionName;
 
     // 4. Insert
     await db.collection(targetCollection).insertOne({
-      ...payload,
+      ...submission,
       _receivedAt: new Date()
     });
 
@@ -178,12 +180,18 @@ export class MongoAdapter implements DatabaseAdapter {
 
   async query(formId: string, limit: number = 50): Promise<PostPipeIngestPayload[]> {
     // 1. We need to find WHICH db/collection this formId maps to.
+    // This is tricky because routing depends on PAYLOAD data (like formName or targetDb).
+    // But here we only have `formId`.
+    // Assumption: The simplest logic is that `formId` maps to a collection with the SAME name
+    // in the DEFAULT database, UNLESS we assume the user knows the targetDb.
+    
+    // We'll search in the default setup first. 
+    // Ideally, we should pass `targetDb` in the query params if we want to query a secondary DB.
     
     const { uri, dbName } = this.getTargetConfig(); // Defaults
     const client = await this.getClient(uri);
     const db = client.db(dbName);
-
-    // We try to find collection by formId.
+    
     const results = await db.collection(formId).find({}).sort({ _receivedAt: -1 }).limit(limit).toArray();
     return results as unknown as PostPipeIngestPayload[];
   }

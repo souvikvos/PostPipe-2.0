@@ -61,3 +61,44 @@ This project is set up as a standard Express app. To deploy to Vercel, simply ad
 
 - **Invalid Signature**: Check that `POSTPIPE_CONNECTOR_SECRET` matches exactly what is in your PostPipe Dashboard.
 - **Timestamp Skew**: Ensure your server's clock is synced (NTP). Requests older than 5 minutes are rejected.
+
+## 🌐 Multi-Database Routing
+
+This connector supports routing submissions to different databases based on the Form configuration.
+
+### 1. Configure in Web App
+
+In the **Form Builder**, use the **Target Database** feature:
+
+1.  Click **[+ Add DB]**.
+2.  Enter an ID (e.g., `marketing`).
+3.  Select this ID for your form.
+
+### 2. Configure Connector Environment
+
+The connector dynamically looks for an environment variable matching the ID:
+
+```env
+# Default DB
+MONGODB_URI=mongodb+srv://...
+
+# Secondary DB (ID: "marketing")
+MONGODB_URI_MARKETING=mongodb+srv://...
+
+# Another DB (ID: "finance")
+MONGODB_URI_FINANCE=mongodb+srv://...
+```
+
+**Note**: The connector automatically maps the ID to uppercase and prepends `MONGODB_URI_`.
+
+### 3. Data Fetching
+
+You can fetch submissions directly from the connector (bypassing PostPipe cloud) using the local API:
+
+**Endpoint**: `GET /api/postpipe/forms/:formId/submissions`
+
+**Parameters**:
+
+- `limit` (optional): Number of records (default 50).
+
+**CORS**: Enabled by default for all origins.

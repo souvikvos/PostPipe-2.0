@@ -1,5 +1,7 @@
 export interface PostPipeIngestPayload {
   formId: string;
+  formName?: string;
+  targetDb?: string; // e.g. "secondary", "marketing"
   submissionId: string;
   timestamp: string; // ISO-8601
   data: Record<string, unknown>;
@@ -15,6 +17,7 @@ export interface ConnectorResponse {
 export interface DatabaseAdapter {
   connect(): Promise<void>;
   insert(submission: PostPipeIngestPayload): Promise<void>;
+  query(formId: string, limit?: number): Promise<PostPipeIngestPayload[]>;
   disconnect?(): Promise<void>;
 }
 

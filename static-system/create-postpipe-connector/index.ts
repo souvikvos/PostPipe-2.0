@@ -77,16 +77,21 @@ async function run() {
   fs.ensureDirSync(root);
   
   // Select template based on DB
+  // Assumes running from dist/ (so __dirname is dist/) and templates are in root specific folders
+  // OR running from root (via ts-node).
+  
+  const baseDir = __dirname.endsWith('dist') ? path.join(__dirname, '..') : __dirname;
+
   let templateDir = '';
   if (response.dbType === 'mongodb') {
-      templateDir = path.join(__dirname, 'mongodb', 'template');
+      templateDir = path.join(baseDir, 'mongodb', 'template');
   } else if (response.dbType === 'postgres') {
-      templateDir = path.join(__dirname, 'postgres', 'template');
+      templateDir = path.join(baseDir, 'postgres', 'template');
   } else if (response.dbType === 'supabase') {
-      templateDir = path.join(__dirname, 'supabase', 'template');
+      templateDir = path.join(baseDir, 'supabase', 'template');
   } else {
       // Fallback
-      templateDir = path.join(__dirname, 'templates', 'default');
+      templateDir = path.join(baseDir, 'templates', 'default');
   }
 
   if (!fs.existsSync(templateDir)) {
@@ -104,11 +109,13 @@ async function run() {
   // Add dependencies based on DB
   const dependencies: Record<string, string> = {
     "express": "^4.18.2",
-    "dotenv": "^16.3.1"
+    "dotenv": "^16.3.1",
+    "cors": "^2.8.5"
   };
   const devDeps: Record<string, string> = {
     "@types/express": "^4.17.17",
     "@types/node": "^20.5.0",
+    "@types/cors": "^2.8.17",
     "typescript": "^5.1.6",
     "ts-node": "^10.9.1",
     "nodemon": "^3.0.1"

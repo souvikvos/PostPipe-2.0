@@ -1,4 +1,4 @@
-import { DatabaseAdapter } from '../../types';
+import { DatabaseAdapter, PostPipeIngestPayload } from '../../types';
 import { MongoAdapter } from './mongodb';
 
 export function getAdapter(): DatabaseAdapter {
@@ -17,7 +17,10 @@ class MemoryAdapter implements DatabaseAdapter {
   async connect() {
     console.log("[MemoryAdapter] Connected (Data will be lost on restart)");
   }
-  async insert(payload: any) {
-    console.log("[MemoryAdapter] Received:", JSON.stringify(payload, null, 2));
+  async insert(submission: PostPipeIngestPayload): Promise<void> {
+    console.log('[MemoryAdapter] Inserted:', submission);
+  }
+  async query(formId: string, limit?: number): Promise<PostPipeIngestPayload[]> {
+      return [];
   }
 }

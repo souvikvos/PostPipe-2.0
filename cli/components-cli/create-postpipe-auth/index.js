@@ -22,6 +22,7 @@ async function main() {
             choices: [
                 { name: '1. MongoDB', value: 'mongodb' },
                 { name: '2. PostgreSQL (Prisma)', value: 'postgresql' },
+                { name: '3. Supabase', value: 'supabase' },
             ],
         },
     ]);
@@ -30,6 +31,8 @@ async function main() {
         await setupMongoDB();
     } else if (answers.database === 'postgresql') {
         await setupPostgreSQL();
+    } else if (answers.database === 'supabase') {
+        await setupSupabase();
     }
 }
 
@@ -94,45 +97,6 @@ async function setupPostgreSQL() {
         // 1. Copy Template Files
         const isSrc = fs.existsSync(path.join(targetDir, 'src'));
         const authDest = isSrc ? path.join(targetDir, 'src', 'lib', 'auth') : path.join(targetDir, 'lib', 'auth');
-        // For Prisma, we often want the schema at root/prisma or src/prisma. 
-        // But here we are copying the "template" folder. 
-        // The structure of template is:
-        // postgresql/template/
-        //   prisma/schema.prisma
-        //   lib/auth/prisma.ts
-        //   .env.example
-
-        // Wait, the mongodb template had "app", "lib", "models". 
-        // My postgresql template has "prisma", "lib/auth", ".env.example".
-        // If I copy "templateDir" to "authDest" (lib/auth), I will end up with lib/auth/prisma/schema.prisma, which is odd.
-
-        // Let's refine the copy logic for Postgres.
-        // We want:
-        // - prisma/schema.prisma -> ./prisma/schema.prisma
-        // - lib/auth/prisma.ts -> ./lib/auth/prisma.ts (or src/lib/auth)
-
-        // So we should copy parts separately or copy everything to root (merging).
-        // BUT, setupMongoDB copies to `authDest` (lib/auth).
-        // MongoDB template structure:
-        //   app/ -> (pages)
-        //   lib/ -> (auth utils)
-        //   models/ -> (User.ts)
-
-        // If I copy mongo template to `lib/auth`, I get `lib/auth/app`, `lib/auth/lib`, `lib/auth/models`. 
-        // That seems to be how it was working...
-        // Let's check `setupMongoDB` again.
-        // `path.join(targetDir, 'src', 'lib', 'auth')`
-        // `await fs.copy(templateDir, authDest)`
-        // If templateDir has `app`, `lib`, `models`, then `lib/auth` will contain `app`, `lib`, `models`. 
-        // Example: `src/lib/auth/models/User.ts`. 
-        // This seems correct for the existing MongoDB logic.
-
-        // For Postgres, I created:
-        // postgresql/template/prisma/schema.prisma
-        // postgresql/template/lib/auth/prisma.ts
-
-        // If I copy `postgresql/template` to `targetDir` (root), it would place `prisma` in root and `lib` in root.
-        // But we want to support `src` directory if it exists.
 
         spinner.text = `Copying templates...`;
 
@@ -142,12 +106,8 @@ async function setupPostgreSQL() {
         await fs.copy(path.join(templateDir, 'prisma'), prismaDest);
 
         // Copy auth utils logic
-        // We put prisma.ts in `postgresql/template/lib/auth/prisma.ts`.
-        // We want it in `src/lib/auth/prisma.ts` or `lib/auth/prisma.ts`.
         const libAuthDest = isSrc ? path.join(targetDir, 'src', 'lib', 'auth') : path.join(targetDir, 'lib', 'auth');
 
-        // Since my template has `lib/auth/prisma.ts`, I should copy `templateDir/lib/auth` to `libAuthDest`.
-        // Since my template has `lib/auth/prisma.ts`, I should copy `templateDir/lib/auth` to `libAuthDest`.
         if (fs.existsSync(path.join(templateDir, 'lib', 'auth'))) {
             await fs.copy(path.join(templateDir, 'lib', 'auth'), libAuthDest);
         }
@@ -190,6 +150,63 @@ async function setupPostgreSQL() {
         console.log(`4. Run: ${chalk.yellow('npx prisma generate')} to generate the client.`);
         console.log(`5. Move the frontend pages from ${chalk.cyan(libAuthDest + '/frontend')} to your app directory.`);
         console.log(`6. Run: ${chalk.yellow('npm run dev')}`);
+
+    } catch (error) {
+        spinner.fail('Setup failed.');
+        console.error(error);
+    }
+}
+
+async function setupSupabase() {
+    const spinner = ora('Initializing Supabase Authentication...').start();
+
+    try {
+        const targetDir = process.cwd();
+        const templateDir = path.join(__dirname, 'supabase', 'template');
+
+        // 1. Copy Template Files
+        // Helper to check if src exists
+        const isSrc = fs.existsSync(path.join(targetDir, 'src'));
+        const authDest = isSrc ? path.join(targetDir, 'src', 'lib', 'auth') : path.join(targetDir, 'lib', 'auth');
+
+        spinner.text = `Copying templates to ${authDest}...`;
+        await fs.copy(templateDir, authDest);
+
+        // 2. Install Dependencies
+        spinner.text = 'Installing dependencies...';
+        await execa('npm', ['install', '@supabase/supabase-js', '@supabase/ssr', 'postpipe', 'zod', 'resend'], { cwd: targetDir });
+
+        // 3. Create .env with placeholders
+        spinner.text = 'Configuring environment...';
+        const envPath = path.join(targetDir, '.env');
+        const exampleEnvPath = path.join(templateDir, 'env.example');
+
+        let envContent = '';
+        if (fs.existsSync(exampleEnvPath)) {
+            envContent = await fs.readFile(exampleEnvPath, 'utf-8');
+        } else {
+            envContent = `
+# PostPipe Auth Configuration (Supabase)
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+            `;
+        }
+
+
+        if (fs.existsSync(envPath)) {
+            await fs.appendFile(envPath, `\n${envContent}`);
+        } else {
+            await fs.writeFile(envPath, envContent);
+        }
+
+        spinner.succeed(chalk.green('Supabase Authentication successfully initialized!'));
+
+        console.log('\nNext Steps:');
+        console.log(`1. Check the files in ${chalk.cyan(authDest)}`);
+        console.log(`2. Update your ${chalk.cyan('.env')} file with real Supabase credentials.`);
+        console.log(`3. Move the frontend pages from ${chalk.cyan(authDest + '/app')} to your app directory.`);
+        console.log(`4. Run: ${chalk.yellow('npm run dev')}`);
 
     } catch (error) {
         spinner.fail('Setup failed.');

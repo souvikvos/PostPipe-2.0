@@ -25,5 +25,10 @@
         "jsonwebtoken": "^9.0.3",
         "next": "^16.1.1",
         "ora": "^8.0.1"
+    },
+    "devDependencies": {
+        "@supabase/ssr": "^0.8.0",
+        "@supabase/supabase-js": "^2.89.0",
+        "zod": "^4.3.4"
     }
 }

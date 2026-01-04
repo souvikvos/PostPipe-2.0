@@ -20,7 +20,8 @@ async function main() {
             message: 'Choose your database:',
             choices: [
                 { name: '1. MongoDB', value: 'mongodb' },
-                { name: '2. DocumentDB (PostPipe Compatible)', value: 'documentdb' },
+                { name: '2. Supabase', value: 'supabase' },
+                { name: '3. DocumentDB (PostPipe Compatible)', value: 'documentdb' },
             ],
             default: 'mongodb'
         },
@@ -39,6 +40,8 @@ async function main() {
 
     if (answers.database === 'mongodb') {
         await setupMongoDB();
+    } else if (answers.database === 'supabase') {
+        await setupSupabase();
     } else if (answers.database === 'documentdb') {
         await setupDocumentDB();
     }
@@ -80,6 +83,50 @@ async function setupMongoDB() {
   
   // In API Route / Server Action
   await adminGuard();
+        `));
+
+    } catch (error) {
+        spinner.fail(chalk.red('Failed to setup admin features.'));
+        console.error(error);
+    }
+}
+
+async function setupSupabase() {
+    const spinner = ora('Setting up admin infrastructure (Supabase)...').start();
+
+    try {
+        const projectRoot = process.cwd();
+        const isSrcDir = fs.existsSync(path.join(projectRoot, 'src'));
+
+        const templateDir = path.join(__dirname, 'supabase', 'template');
+
+        // Helper to copy
+        const copyTemplate = async (sourceSubDir, destPath) => {
+            const source = path.join(templateDir, sourceSubDir);
+            if (await fs.pathExists(source)) {
+                await fs.copy(source, destPath);
+            }
+        };
+
+        const libDir = isSrcDir ? path.join('src', 'lib', 'auth') : path.join('lib', 'auth');
+        await fs.ensureDir(path.join(projectRoot, libDir));
+
+        spinner.text = 'Creating Admin Guard utility...';
+        await copyTemplate('lib/auth/adminGuard.ts', path.join(projectRoot, libDir, 'adminGuard.ts'));
+
+        spinner.succeed(chalk.green('Supabase Admin features scaffolded successfully!'));
+
+        console.log(chalk.yellow('\nNext Steps:'));
+        console.log('1. Go to your Supabase Dashboard -> Authentication -> Users.');
+        console.log('2. Edit a user and add metadata: { "role": "admin" }.');
+        console.log('3. Use the guard in your actions/pages:');
+        console.log(chalk.cyan(`
+  import { adminGuard } from '@/lib/auth/adminGuard';
+  
+  export async function mySecuredAction() {
+      const user = await adminGuard();
+      // ... secure logic
+  }
         `));
 
     } catch (error) {

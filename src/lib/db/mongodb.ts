@@ -69,9 +69,7 @@ export class MongoAdapter implements DatabaseAdapter {
   private resolveValue(val: string): string {
     if (val.startsWith('env:')) {
       const envVar = val.split('env:')[1];
-      const result = process.env[envVar] || '';
-      if (!result) console.warn(`[MongoAdapter] Warning: Env var ${envVar} sought but empty.`);
-      return result;
+      return process.env[envVar] || '';
     }
     return val;
   }
@@ -208,33 +206,21 @@ export class MongoAdapter implements DatabaseAdapter {
     let targetDbName = this.defaultDbName;
 
     if (options?.databaseConfig?.uri) {
-      const envVarName = options.databaseConfig.uri.trim(); // Ensure no whitespace
+      const envVarName = options.databaseConfig.uri;
       const resolvedUri = process.env[envVarName];
-      console.log(`[MongoAdapter] Lookup URI for key: '${envVarName}' -> Found: ${!!resolvedUri ? 'YES' : 'NO'}`);
-
       if (resolvedUri) {
         targetUri = resolvedUri;
         targetDbName = options.databaseConfig.dbName || targetDbName;
         console.log(`[MongoAdapter] Querying routed DB: ${targetDbName}`);
-      } else {
-        console.warn(`[MongoAdapter] Failed to resolve URI from env var: '${envVarName}'`);
-        const availableKeys = Object.keys(process.env).filter(k => k.startsWith('MONGODB_URI'));
-        console.log(`[MongoAdapter] Available MONGODB_URI_* keys:`, availableKeys);
       }
     } else {
       // Fallback to default config resolution
-      // Fix: Pass targetDatabase from options to getTargetConfig to enable dynamic routing (MONGODB_URI_{TARGET})
-      const config = this.getTargetConfig({ targetDb: options?.targetDatabase } as any);
+      const config = this.getTargetConfig();
       targetUri = config.uri;
       targetDbName = config.dbName;
     }
 
     if (!targetUri) {
-      console.error("[MongoAdapter] CRITICAL: No MongoDB URI resolved. Config state:", {
-        defaultUri: this.defaultUri ? 'SET' : 'UNSET',
-        hasConfig: !!this.config,
-        options: options
-      });
       throw new Error("No MongoDB URI resolved for query.");
     }
 

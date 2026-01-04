@@ -75,10 +75,7 @@ class MongoAdapter {
     resolveValue(val) {
         if (val.startsWith('env:')) {
             const envVar = val.split('env:')[1];
-            const result = process.env[envVar] || '';
-            if (!result)
-                console.warn(`[MongoAdapter] Warning: Env var ${envVar} sought but empty.`);
-            return result;
+            return process.env[envVar] || '';
         }
         return val;
     }
@@ -187,51 +184,29 @@ class MongoAdapter {
         });
         console.log(`[MongoAdapter] Saved to DB [${dbName}] -> Collection [${targetCollection}]`);
     }
-    async query(formId, options) {
-        // 1. Determine Database URI & Name
-        let targetUri = this.defaultUri;
-        let targetDbName = this.defaultDbName;
-        if (options?.databaseConfig?.uri) {
-            const envVarName = options.databaseConfig.uri.trim(); // Ensure no whitespace
-            const resolvedUri = process.env[envVarName];
-            console.log(`[MongoAdapter] Lookup URI for key: '${envVarName}' -> Found: ${!!resolvedUri ? 'YES' : 'NO'}`);
-            if (resolvedUri) {
-                targetUri = resolvedUri;
-                targetDbName = options.databaseConfig.dbName || targetDbName;
-                console.log(`[MongoAdapter] Querying routed DB: ${targetDbName}`);
-            }
-            else {
-                console.warn(`[MongoAdapter] Failed to resolve URI from env var: '${envVarName}'`);
-                const availableKeys = Object.keys(process.env).filter(k => k.startsWith('MONGODB_URI'));
-                console.log(`[MongoAdapter] Available MONGODB_URI_* keys:`, availableKeys);
-            }
-        }
-        else {
-            // Fallback to default config resolution
-            // Fix: Pass targetDatabase from options to getTargetConfig to enable dynamic routing (MONGODB_URI_{TARGET})
-            const config = this.getTargetConfig({ targetDb: options?.targetDatabase });
-            targetUri = config.uri;
-            targetDbName = config.dbName;
-        }
-        if (!targetUri) {
-            console.error("[MongoAdapter] CRITICAL: No MongoDB URI resolved. Config state:", {
-                defaultUri: this.defaultUri ? 'SET' : 'UNSET',
-                hasConfig: !!this.config,
-                options: options
-            });
-            throw new Error("No MongoDB URI resolved for query.");
-        }
-        // 2. Get Client from Pool
-        const client = await this.getClient(targetUri);
-        const db = client.db(targetDbName);
-        // 3. Query Collection
-        // Assuming collection name == formId
-        const collection = db.collection(formId);
-        const results = await collection
-            .find({})
-            .sort({ _receivedAt: -1 })
-            .limit(options?.limit || 50)
-            .toArray();
+    async query(formId, limit = 50) {
+        // 1. We need to find WHICH db/collection this formId maps to.
+        // This is tricky because routing depends on PAYLOAD data (like formName or targetDb).
+        // But here we only have `formId`.
+        // Assumption: The simplest logic is that `formId` maps to a collection with the SAME name
+        // in the DEFAULT database, UNLESS we assume the user knows the targetDb.
+        // However, the `createForm` in DB stores the targetDb. The web app sends `formId`.
+        // The connector doesn't know the `targetDb` from just `formId` unless we query ALL DBs or use a map.
+        // For now, let's assume we query the DEFAULT database's collection named `formId` OR `formName`.
+        // We'll search in the default setup first. 
+        // Ideally, we should pass `targetDb` in the query params if we want to query a secondary DB.
+        // Let's assume we query the collection `formId` in the default DB.
+        // If the USER routing logic put it elsewhere, this simple query might fail to find it without more info.
+        // But let's verify if `insert` uses `formId` as collection name.
+        // Yes: `const targetCollection = payload.formName || payload.formId || this.collectionName;`
+        // So if formName is missing, it uses formId.
+        const { uri, dbName } = this.getTargetConfig(); // Defaults
+        const client = await this.getClient(uri);
+        const db = client.db(dbName);
+        // We try to find collection by formId.
+        // Note: If routing put it in 'secondary', this won't find it unless we check 'secondary'.
+        // We might need to iterate or accept 'targetDb' in query args.
+        const results = await db.collection(formId).find({}).sort({ _receivedAt: -1 }).limit(limit).toArray();
         return results;
     }
     async disconnect() {

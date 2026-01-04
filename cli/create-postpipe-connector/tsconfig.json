@@ -9,6 +9,12 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["index.ts", "src/**/*", "mongodb/template/**/*"],
-  "exclude": ["node_modules", "templates"]
+  "include": [
+    "index.ts",
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "templates"
+  ]
 }

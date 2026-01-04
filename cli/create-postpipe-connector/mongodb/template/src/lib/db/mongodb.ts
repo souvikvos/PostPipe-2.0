@@ -25,7 +25,7 @@ const connectionPool = new Map<string, Promise<MongoClient>>();
 
 export class MongoAdapter implements DatabaseAdapter {
   private config: DbRouteConfig | null = null;
-  
+
   // These are now resolved dynamically per request, but we keep 'default' 
   // values initialized for fallback or initial connection if needed.
   private defaultUri: string;
@@ -69,7 +69,9 @@ export class MongoAdapter implements DatabaseAdapter {
   private resolveValue(val: string): string {
     if (val.startsWith('env:')) {
       const envVar = val.split('env:')[1];
-      return process.env[envVar] || '';
+      const result = process.env[envVar] || '';
+      if (!result) console.warn(`[MongoAdapter] Warning: Env var ${envVar} sought but empty.`);
+      return result;
     }
     return val;
   }
@@ -82,27 +84,27 @@ export class MongoAdapter implements DatabaseAdapter {
 
     // 2. Determine Target from Payload
     let target = this.config?.defaultTarget || 'default';
-    
+
     // Dynamic: If payload has targetDb, try to find matching Env Var
     if (payload?.targetDb) {
       const dynamicKey = `MONGODB_URI_${payload.targetDb.toUpperCase()}`; // e.g. MONGODB_URI_SECONDARY
       const dynamicUri = process.env[dynamicKey];
-      
+
       console.log(`[MongoAdapter] Debug: targetDb="${payload.targetDb}", looking for env var "${dynamicKey}"`);
 
       if (dynamicUri) {
         console.log(`[MongoAdapter] Dynamic Logic: Found ${dynamicKey}, routing to '${payload.targetDb}'`);
-        return { uri: dynamicUri, dbName: `postpipe_${payload.targetDb}` }; 
+        return { uri: dynamicUri, dbName: `postpipe_${payload.targetDb}` };
       } else {
-         console.warn(`[MongoAdapter] Warning: targetDb '${payload.targetDb}' requested but env var '${dynamicKey}' not found. Available keys: ${Object.keys(process.env).filter(k => k.startsWith('MONGODB_URI_')).join(', ')}`);
-         console.warn(`[MongoAdapter] Falling back to default routing logic.`);
+        console.warn(`[MongoAdapter] Warning: targetDb '${payload.targetDb}' requested but env var '${dynamicKey}' not found. Available keys: ${Object.keys(process.env).filter(k => k.startsWith('MONGODB_URI_')).join(', ')}`);
+        console.warn(`[MongoAdapter] Falling back to default routing logic.`);
       }
     }
 
     if (payload && this.config?.rules) {
       for (const rule of this.config.rules) {
         const value = (payload as any)[rule.field]; // e.g. payload.formName
-        
+
         if (value && new RegExp(rule.match).test(String(value))) {
           console.log(`[MongoAdapter] Routing Rule Matched: ${rule.field}="${value}" matches /${rule.match}/ -> ${rule.target}`);
           target = rule.target;
@@ -131,13 +133,13 @@ export class MongoAdapter implements DatabaseAdapter {
     }
 
     console.log(`[MongoAdapter] Creating new connection pool for URI: ${uri.replace(/\/\/.*@/, '//***@')}`); // Mask secret
-    
+
     // Create promise and store it immediately
     const clientPromise = new MongoClient(uri).connect().then(client => {
-       console.log(`[MongoAdapter] Connected to MongoDB host.`);
-       return client;
+      console.log(`[MongoAdapter] Connected to MongoDB host.`);
+      return client;
     });
-    
+
     connectionPool.set(uri, clientPromise);
     return clientPromise;
   }
@@ -147,23 +149,47 @@ export class MongoAdapter implements DatabaseAdapter {
   async connect(): Promise<void> {
     // Optional: Pre-warm the default connection
     try {
-        const { uri } = this.getTargetConfig();
-        if (uri) await this.getClient(uri);
+      const { uri } = this.getTargetConfig();
+      if (uri) await this.getClient(uri);
     } catch (e) {
-        console.warn("[MongoAdapter] Initial connection warning:", e);
+      console.warn("[MongoAdapter] Initial connection warning:", e);
     }
   }
 
   async insert(payload: PostPipeIngestPayload): Promise<void> {
-    // 1. Resolve which DB to use based on payload
-    const { uri, dbName } = this.getTargetConfig(payload);
+    // 1. EXTRACT CONFIG FROM PAYLOAD
+    const { targetDatabase, databaseConfig } = payload as any;
+    let uri: string | undefined;
+    let dbName: string = "postpipe"; // default
 
-    if (!uri) throw new Error("No MongoDB URI resolved.");
+    if (databaseConfig) {
+      // CASE A: Frontend sent explicit config (Dependency Injection)
+
+      // The frontend sends the VARIABLE NAME, so we look it up in process.env
+      // This requires the Connector to have the same .env variables as Frontend
+      const envVarName = databaseConfig.uri;
+      uri = process.env[envVarName];
+
+      if (databaseConfig.dbName) {
+        dbName = databaseConfig.dbName;
+      }
+
+      console.log(`[MongoAdapter] Using injected config: ${envVarName} -> ${uri ? 'Found' : 'MISSING'}`);
+    } else {
+      // CASE B: Legacy / Fallback (Old behavior)
+      const config = this.getTargetConfig(payload);
+      uri = config.uri;
+      dbName = config.dbName;
+    }
+
+    if (!uri) {
+      throw new Error(`No MongoDB URI resolved. Target: ${targetDatabase || payload.targetDb}`);
+    }
 
     // 2. Get connection (cached)
     const client = await this.getClient(uri);
     const db = client.db(dbName);
-    
+
     // 3. Determine Collection (Dynamic logic from previous task via payload)
     const targetCollection = payload.formName || payload.formId || this.collectionName;
 
@@ -176,23 +202,64 @@ export class MongoAdapter implements DatabaseAdapter {
     console.log(`[MongoAdapter] Saved to DB [${dbName}] -> Collection [${targetCollection}]`);
   }
 
-  async query(formId: string, limit: number = 50): Promise<PostPipeIngestPayload[]> {
-    // 1. We need to find WHICH db/collection this formId maps to.
-    
-    const { uri, dbName } = this.getTargetConfig(); // Defaults
-    const client = await this.getClient(uri);
-    const db = client.db(dbName);
+  async query(formId: string, options?: any): Promise<PostPipeIngestPayload[]> {
+    // 1. Determine Database URI & Name
+    let targetUri = this.defaultUri;
+    let targetDbName = this.defaultDbName;
 
-    // We try to find collection by formId.
-    const results = await db.collection(formId).find({}).sort({ _receivedAt: -1 }).limit(limit).toArray();
+    if (options?.databaseConfig?.uri) {
+      const envVarName = options.databaseConfig.uri.trim(); // Ensure no whitespace
+      const resolvedUri = process.env[envVarName];
+      console.log(`[MongoAdapter] Lookup URI for key: '${envVarName}' -> Found: ${!!resolvedUri ? 'YES' : 'NO'}`);
+
+      if (resolvedUri) {
+        targetUri = resolvedUri;
+        targetDbName = options.databaseConfig.dbName || targetDbName;
+        console.log(`[MongoAdapter] Querying routed DB: ${targetDbName}`);
+      } else {
+        console.warn(`[MongoAdapter] Failed to resolve URI from env var: '${envVarName}'`);
+        const availableKeys = Object.keys(process.env).filter(k => k.startsWith('MONGODB_URI'));
+        console.log(`[MongoAdapter] Available MONGODB_URI_* keys:`, availableKeys);
+      }
+    } else {
+      // Fallback to default config resolution
+      // Fix: Pass targetDatabase from options to getTargetConfig to enable dynamic routing (MONGODB_URI_{TARGET})
+      const config = this.getTargetConfig({ targetDb: options?.targetDatabase } as any);
+      targetUri = config.uri;
+      targetDbName = config.dbName;
+    }
+
+    if (!targetUri) {
+      console.error("[MongoAdapter] CRITICAL: No MongoDB URI resolved. Config state:", {
+        defaultUri: this.defaultUri ? 'SET' : 'UNSET',
+        hasConfig: !!this.config,
+        options: options
+      });
+      throw new Error("No MongoDB URI resolved for query.");
+    }
+
+    // 2. Get Client from Pool
+    const client = await this.getClient(targetUri);
+    const db = client.db(targetDbName);
+
+    // 3. Query Collection
+    // Assuming collection name == formId
+    const collection = db.collection(formId);
+
+    const results = await collection
+      .find({})
+      .sort({ _receivedAt: -1 })
+      .limit(options?.limit || 50)
+      .toArray();
+
     return results as unknown as PostPipeIngestPayload[];
   }
 
   async disconnect(): Promise<void> {
     // Close all connections
     for (const [uri, clientPromise] of connectionPool.entries()) {
-        const client = await clientPromise;
-        await client.close();
+      const client = await clientPromise;
+      await client.close();
     }
     connectionPool.clear();
   }

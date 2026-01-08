@@ -1,4 +1,4 @@
-# PostPipe 2.0 Lab 🧪
+# PostPipe 2.0 🧪
 
 Welcome to the development and testing ground for PostPipe 2.0.
 
